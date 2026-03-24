@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TODO</title>
+</head>
+<body>
+    <h1>TODO Liste</h1>
+
+    <input type="text" id="todoInput" placeholder="Skriv en opgave">
+    <button onclick="addTodo()">Tilføj</button>
+
+    <ul id="todoList"></ul>
+
+    <script>
+        const API = "http://127.0.0.1:5000";
+
+        async function loadTodos() {
+            const res = await fetch(API + "/todos");
+            const todos = await res.json();
+
+            const list = document.getElementById("todoList");
+            list.innerHTML = "";
+
+            todos.forEach(todo => {
+                const li = document.createElement("li");
+
+                li.innerHTML = `
+                    ${todo.text}
+                    [${todo.source}]
+                    ${todo.completed ? "(færdig)" : ""}
+                    <button onclick="completeTodo(${todo.id})">✔</button>
+                `;
+
+                list.appendChild(li);
+            });
+        }
+
+        async function addTodo() {
+            const input = document.getElementById("todoInput");
+
+            await fetch(API + "/todos", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    text: input.value
+                })
+            });
+
+            input.value = "";
+            loadTodos();
+        }
+
+        async function completeTodo(id) {
+            await fetch(API + "/todos/" + id, {
+                method: "PUT"
+            });
+
+            loadTodos();
+        }
+
+        loadTodos();
+    </script>
+</body>
+</html>
