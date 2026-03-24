@@ -1,76 +1,47 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-import sqlite3
-from flask import render_template
-
+from flask import Flask, render_template, request, redirect, url_for
 
 app = Flask(__name__)
-CORS(app)
 
-DB = 'todo.db'
-
-# Initialize database
-def init_db():
-    conn = sqlite3.connect(DB)
-    c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS todos (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        text TEXT,
-        completed INTEGER DEFAULT 0,
-        source TEXT
-    )''')
-    conn.commit()
-    conn.close()
-
-init_db()
-
-# Helper
-def query_db(query, args=(), one=False):
-    conn = sqlite3.connect(DB)
-    c = conn.cursor()
-    c.execute(query, args)
-    rows = c.fetchall()
-    conn.commit()
-    conn.close()
-    return (rows[0] if rows else None) if one else rows
-
-# Get all todos
-@app.route('/todos', methods=['GET'])
-def get_todos():
-    rows = query_db('SELECT * FROM todos')
-    todos = [
-        {"id": r[0], "text": r[1], "completed": r[2], "source": r[3]}
-        for r in rows
-    ]
-    return jsonify(todos)
-
-# Add todo
-@app.route('/todos', methods=['POST'])
-def add_todo():
-    data = request.json
-    text = data.get('text')
-    source = data.get('source', 'web')
-    query_db('INSERT INTO todos (text, source) VALUES (?, ?)', (text, source))
-    return jsonify({"success": True})
-
-# Complete todo
-@app.route('/todos/<int:todo_id>', methods=['PUT'])
-def complete_todo(todo_id):
-    query_db('UPDATE todos SET completed = 1 WHERE id = ?', (todo_id,))
-    return jsonify({"success": True})
-
-# Watch endpoint
-@app.route('/watch-data', methods=['POST'])
-def watch_data():
-    data = request.json
-    task = data.get('task')
-    query_db('INSERT INTO todos (text, source) VALUES (?, ?)', (task, 'watch'))
-    return jsonify({"success": True})
-
+# Forside med dropdown
 @app.route('/')
-def index():
-    return render_template('Home.html')
+def home():
+    lists = ["list1", "list2", "list3", "Work"]
+    return render_template('home.html', lists=lists)
 
+# Routes for hver liste
+@app.route('/list1')
+def list1():
+    # 'todos' sendes som eksempel, backend håndterer rigtige data
+    todos = [
+        {"text": "Eksempel opgave 1", "completed": 0, "source": "user"},
+        {"text": "Eksempel opgave 2", "completed": 1, "source": "friend"}
+    ]
+    return render_template('list.html', todos=todos, list_name="list1")
+
+@app.route('/list2')
+def list2():
+    todos = []
+    return render_template('list.html', todos=todos, list_name="list2")
+
+@app.route('/list3')
+def list3():
+    todos = []
+    return render_template('list.html', todos=todos, list_name="list3")
+
+@app.route('/work')
+def work_list():
+    todos = []
+    return render_template('list.html', todos=todos, list_name="Work")
+
+# Route til at tilføje todo (frontend form)
+@app.route('/add-todo', methods=['POST'])
+def add_todo():
+    # Her antages backend håndterer data, vi redirecter kun til korrekt liste
+    list_name = request.form.get('list_name')
+    if list_name.lower() == "work":
+        return redirect(url_for('work_list'))
+    else:
+        return redirect(url_for(list_name.lower()))
 
 if __name__ == '__main__':
     app.run(debug=True)

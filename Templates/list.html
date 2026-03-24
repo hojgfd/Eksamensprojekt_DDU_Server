@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ list_name }} - TODO</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 30px; }
+        table { border-collapse: collapse; width: 100%; max-width: 600px; }
+        th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
+        th { background-color: #f0f0f0; }
+        button { padding: 3px 8px; cursor: pointer; }
+        .completed { text-decoration: line-through; color: gray; }
+        .green-check { color: green; font-weight: bold; font-size: 1.2em; }
+        #list-name-input { font-size: 1.2em; padding: 4px; }
+    </style>
+</head>
+<body>
+    <h1>
+        Liste:
+        <input id="list-name-input" type="text" value="{{ list_name }}">
+        <button onclick="updateListName()">Gem</button>
+    </h1>
+
+    <!-- Tilføj ny todo -->
+    <form action="/add-todo" method="post" style="margin-bottom: 20px;">
+        <input type="text" name="text" placeholder="Skriv en opgave" required>
+        <input type="hidden" name="list_name" value="{{ list_name }}">
+        <button type="submit">Tilføj</button>
+    </form>
+
+    <!-- Todos tabel -->
+    <table>
+        <thead>
+            <tr>
+                <th>Opgave</th>
+                <th>Source</th>
+                <th>Færdig</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for todo in todos %}
+            <tr class="{% if todo.completed %}completed{% endif %}">
+                <td>{{ todo.text }}</td>
+                <td>{{ todo.source }}</td>
+                <td style="text-align: center;">
+                    <button class="complete-btn" onclick="toggleComplete(this)">
+                        {% if todo.completed %}✔{% else %}❏{% endif %}
+                    </button>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="3" style="text-align: center;">Ingen opgaver endnu</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="/">← Tilbage til forsiden</a>
+
+    <script>
+        // Toggle completed status (kun frontend)
+        function toggleComplete(btn) {
+            if (btn.innerText === "✔") {
+                btn.innerText = "❏";
+                btn.closest('tr').classList.remove("completed");
+            } else {
+                btn.innerText = "✔";
+                btn.closest('tr').classList.add("completed");
+            }
+        }
+
+        // Rediger liste navn (kun frontend)
+        function updateListName() {
+            const input = document.getElementById('list-name-input');
+            const newName = input.value.trim();
+            if(newName) {
+                alert("Listenavn ændret til: " + newName);
+                // Her kan du sende det til backend hvis nødvendigt
+            } else {
+                alert("Listenavn må ikke være tomt!");
+            }
+        }
+    </script>
+</body>
+</html>

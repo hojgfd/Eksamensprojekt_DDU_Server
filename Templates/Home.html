@@ -1,66 +1,32 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>TODO</title>
+    <title>Home</title>
 </head>
 <body>
-    <h1>TODO Liste</h1>
-
-    <input type="text" id="todoInput" placeholder="Skriv en opgave">
-    <button onclick="addTodo()">Tilføj</button>
-
-    <ul id="todoList"></ul>
+    <h1>Vælg din todo-liste</h1>
+    <form action="" method="get" onsubmit="return goToList();">
+        <select id="list-select" name="list">
+            <option value="">Vælg liste...</option>
+            <option value="/list1">list1</option>
+            <option value="/list2">list2</option>
+            <option value="/list3">list3</option>
+            <option value="/work">Work</option>
+        </select>
+        <button type="submit">Open</button>
+    </form>
 
     <script>
-        const API = "http://127.0.0.1:5000";
-
-        async function loadTodos() {
-            const res = await fetch(API + "/todos");
-            const todos = await res.json();
-
-            const list = document.getElementById("todoList");
-            list.innerHTML = "";
-
-            todos.forEach(todo => {
-                const li = document.createElement("li");
-
-                li.innerHTML = `
-                    ${todo.text}
-                    [${todo.source}]
-                    ${todo.completed ? "(færdig)" : ""}
-                    <button onclick="completeTodo(${todo.id})">✔</button>
-                `;
-
-                list.appendChild(li);
-            });
+        function goToList() {
+            const select = document.getElementById('list-select');
+            const url = select.value;
+            if (!url) {
+                alert("Vælg venligst en liste først!");
+                return false; // Forhindrer submit
+            }
+            window.location.href = url; // Redirect til valgt liste
+            return false; // Forhindrer form submit
         }
-
-        async function addTodo() {
-            const input = document.getElementById("todoInput");
-
-            await fetch(API + "/todos", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    text: input.value
-                })
-            });
-
-            input.value = "";
-            loadTodos();
-        }
-
-        async function completeTodo(id) {
-            await fetch(API + "/todos/" + id, {
-                method: "PUT"
-            });
-
-            loadTodos();
-        }
-
-        loadTodos();
     </script>
 </body>
 </html>
