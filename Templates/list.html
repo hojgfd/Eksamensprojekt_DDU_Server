@@ -9,7 +9,6 @@
         th { background-color: #f0f0f0; }
         button { padding: 3px 8px; cursor: pointer; }
         .completed { text-decoration: line-through; color: gray; }
-        .green-check { color: green; font-weight: bold; font-size: 1.2em; }
         #list-name-input { font-size: 1.2em; padding: 4px; }
     </style>
 </head>
@@ -32,19 +31,21 @@
         <thead>
             <tr>
                 <th>Opgave</th>
-                <th>Source</th>
                 <th>Færdig</th>
+                <th>Handling</th>
             </tr>
         </thead>
         <tbody>
             {% for todo in todos %}
             <tr class="{% if todo.completed %}completed{% endif %}">
                 <td>{{ todo.text }}</td>
-                <td>{{ todo.source }}</td>
                 <td style="text-align: center;">
                     <button class="complete-btn" onclick="toggleComplete(this)">
                         {% if todo.completed %}✔{% else %}❏{% endif %}
                     </button>
+                </td>
+                <td style="text-align: center;">
+                    <button onclick="deleteTask({{ todo.id }})">🗑️</button>
                 </td>
             </tr>
             {% else %}
@@ -73,9 +74,23 @@
             const newName = input.value.trim();
             if(newName) {
                 alert("Listenavn ændret til: " + newName);
-                // Her kan du sende det til backend hvis nødvendigt
             } else {
                 alert("Listenavn må ikke være tomt!");
+            }
+        }
+
+        // Slet en todo med confirm
+        function deleteTask(taskId) {
+            if (confirm("Er du sikker på, at du vil slette denne opgave?")) {
+                fetch(`/delete-todo/${taskId}`, { method: 'POST' })
+                    .then(res => {
+                        if (res.ok) {
+                            alert("Opgave slettet!");
+                            location.reload();
+                        } else {
+                            alert("Kunne ikke slette opgaven.");
+                        }
+                    });
             }
         }
     </script>
