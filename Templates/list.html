@@ -40,6 +40,7 @@
             border-radius: 6px;
             cursor: pointer;
             margin-left: 5px;
+            transition: 0.2s;
         }
 
         button:hover {
@@ -67,7 +68,11 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: 0.2s;
+            transition: all 0.3s ease;
+        }
+
+        .todo-card:hover {
+            transform: scale(1.02);
         }
 
         .todo-card.completed {
@@ -76,12 +81,21 @@
             color: gray;
         }
 
+        .todo-card.removing {
+            opacity: 0;
+            transform: translateX(100px);
+        }
+
         .todo-text {
             flex: 1;
         }
 
         .actions button {
             margin-left: 5px;
+        }
+
+        .delete-confirm {
+            background-color: #e53935 !important;
         }
 
         .back {
@@ -127,7 +141,7 @@
                 <button onclick="toggleComplete({{ todo.id }})">
                     {% if todo.completed %}✔{% else %}❏{% endif %}
                 </button>
-                <button onclick="deleteTask({{ todo.id }})">🗑️</button>
+                <button onclick="deleteTask({{ todo.id }}, this)">🗑️</button>
             </div>
         </div>
         {% else %}
@@ -146,23 +160,64 @@
             });
         }
 
-        function deleteTask(taskId) {
-            if (!confirm("Slet opgaven?")) return;
-            fetch(`/delete-todo/{{ list_name }}/${taskId}`, { method: 'POST' })
-            .then(res => {
-                if (res.ok) location.reload();
-                else alert("Kunne ikke slette");
-            });
+        function deleteTask(taskId, btn) {
+
+            const card = btn.closest('.todo-card');
+
+            // Hvis allerede rød → slet
+            if (btn.classList.contains("delete-confirm")) {
+
+                // animation
+                card.classList.add("removing");
+
+                setTimeout(() => {
+                    fetch(`/delete-todo/{{ list_name }}/${taskId}`, { method: 'POST' })
+                    .then(res => {
+                        if (res.ok) {
+                            card.remove(); // fjern uden reload 🔥
+                        } else {
+                            alert("Kunne ikke slette");
+                        }
+                    });
+                }, 300);
+
+                return;
+            }
+
+            // Første klik → gør rød
+            btn.classList.add("delete-confirm");
+            btn.innerText = "Slet?";
+
+            // reset efter 3 sek
+            setTimeout(() => {
+                btn.classList.remove("delete-confirm");
+                btn.innerText = "🗑️";
+            }, 3000);
         }
 
         function updateListName() {
-            const newName = document.getElementById('list-name-input').value.trim();
-            if (!newName) {
-                alert("Navn må ikke være tomt!");
-                return;
-            }
-            alert("Listenavn ændret til: " + newName);
-        }
+    const input = document.getElementById('list-name-input');
+    const newName = input.value.trim();
+    const oldName = "{{ list_name }}";
+
+    if (!newName) {
+        alert("Navn må ikke være tomt!");
+        return;
+    }
+
+    // Send til backend
+    const formData = new URLSearchParams();
+    formData.append("old_name", oldName);
+    formData.append("new_name", newName);
+
+    fetch('/rename-list', {
+        method: 'POST',
+        body: formData
+    }).then(() => {
+        // Redirect til ny URL
+        window.location.href = "/" + newName;
+    });
+}
     </script>
 </body>
 </html>

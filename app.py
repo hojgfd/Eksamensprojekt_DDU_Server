@@ -129,6 +129,26 @@ def toggle_todo(list_name, task_id):
         conn.commit()
     conn.close()
     return jsonify({"status": "toggled"})
+# Rename liste
+@app.route('/rename-list', methods=['POST'])
+def rename_list():
+    old_name = request.form.get('old_name').strip()
+    new_name = request.form.get('new_name').strip()
+
+    if not old_name or not new_name:
+        return redirect(url_for('home'))
+
+    conn = sqlite3.connect(DB)
+    cursor = conn.cursor()
+
+    # Opdater navnet
+    cursor.execute("UPDATE todolists SET name=? WHERE name=?", (new_name, old_name))
+
+    conn.commit()
+    conn.close()
+
+    return redirect(url_for('show_list', list_name=new_name))
+
 
 if __name__ == '__main__':
     app.run(debug=True)
