@@ -148,7 +148,7 @@
         <p class="empty">Ingen opgaver endnu</p>
         {% endfor %}
 
-        <a class="back" href="/">← Tilbage til forsiden</a>
+        <a class="back" href="/todo">← Tilbage til forsiden</a>
     </div>
 
     <script>
@@ -215,7 +215,7 @@
         body: formData
     }).then(() => {
         // Redirect til ny URL
-        window.location.href = "/" + newName;
+        window.location.href = "/todo/" + newName;
     });
 }
     </script>
