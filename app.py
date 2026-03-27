@@ -8,7 +8,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB = os.path.join(BASE_DIR, "data.db")
 
 
-# INIT DATABASE
+# INIT DATABASE ()
 def init_db():
     conn = sqlite3.connect(DB)
     cursor = conn.cursor()
