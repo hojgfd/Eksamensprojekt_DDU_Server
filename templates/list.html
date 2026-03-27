@@ -148,7 +148,21 @@
         <p class="empty">Ingen opgaver endnu</p>
         {% endfor %}
 
-        <a class="back" href="/todo">← Tilbage til forsiden</a>
+<div style="text-align: center; margin-top: 20px;">
+    <a href="{{ url_for('home') }}" style="
+        display: inline-block;
+        padding: 10px 20px;
+        border: 2px solid #2e7d32;
+        color: #2e7d32;
+        text-decoration: none;
+        border-radius: 6px;
+        transition: 0.3s;
+    " onmouseover="this.style.backgroundColor='#2e7d32'; this.style.color='white';"
+       onmouseout="this.style.backgroundColor='transparent'; this.style.color='#2e7d32';">
+        ← Tilbage til to-do oversigt
+    </a>
+</div>
+
     </div>
 
     <script>
