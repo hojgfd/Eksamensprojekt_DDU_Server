@@ -3,27 +3,85 @@
 <head>
     <title>Home</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 30px; }
-        input, select, button { padding: 5px; margin: 5px; font-size: 1em; }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f7f6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        h1, h2 {
+            text-align: center;
+            color: #2e7d32; /* mørkegrøn */
+        }
+
+        .dropdown-container, .new-list-container {
+            margin: 30px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        select, input[type="text"] {
+            padding: 10px;
+            font-size: 1em;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            min-width: 200px;
+        }
+
+        button {
+            background-color: #43a047; /* grøn */
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1em;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background-color: #2e7d32;
+        }
+
+        option {
+            font-size: 1em;
+        }
     </style>
 </head>
 <body>
-    <h1>Vælg din todo-liste</h1>
+    <div class="container">
+        <h1>Vælg din TODO-liste</h1>
 
-    <!-- Dropdown for eksisterende lister -->
-    <form onsubmit="return goToList();">
-        <select id="list-select" name="list">
-            <option value="">Vælg liste...</option>
-            {% for l in lists %}
-            <option value="/{{ l }}">{{ l }}</option>
-            {% endfor %}
-        </select>
-        <button type="submit">Open</button>
-    </form>
+        <!-- Dropdown for eksisterende lister -->
+        <div class="dropdown-container">
+            <select id="list-select" name="list">
+                <option value="">Vælg liste...</option>
+                {% for l in lists %}
+                <option value="/{{ l|lower }}">{{ l }}</option>
+                {% endfor %}
+            </select>
+            <button type="button" onclick="goToList()">Åbn</button>
+        </div>
 
-    <h2>Opret ny liste</h2>
-    <input type="text" id="new-list-name" placeholder="Skriv listenavn">
-    <button type="button" onclick="addNewList()">Tilføj liste</button>
+        <h2>Opret ny liste</h2>
+        <div class="new-list-container">
+            <input type="text" id="new-list-name" placeholder="Skriv listenavn">
+            <button type="button" onclick="addNewList()">Tilføj liste</button>
+        </div>
+    </div>
 
     <script>
         // Gå til valgt liste
@@ -32,13 +90,12 @@
             const url = select.value;
             if (!url) {
                 alert("Vælg venligst en liste først!");
-                return false;
+                return;
             }
             window.location.href = url;
-            return false;
         }
 
-        // Tilføj ny liste til backend + dropdown
+        // Tilføj ny liste (kun frontend / fake)
         function addNewList() {
             const input = document.getElementById('new-list-name');
             const name = input.value.trim();
@@ -47,24 +104,18 @@
                 return;
             }
 
-            // Send til backend for at oprette listen
-            fetch('/add-todo', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `list_name=${encodeURIComponent(name)}&text=`
-            }).then(res => {
-                // Tilføj til dropdown
-                const select = document.getElementById('list-select');
-                const option = document.createElement("option");
-                option.value = "/" + name;
-                option.textContent = name;
-                select.appendChild(option);
+            // Tilføj til dropdown
+            const select = document.getElementById('list-select');
+            const option = document.createElement("option");
+            option.value = "/" + name;
+            option.textContent = name;
+            select.appendChild(option);
 
-                // Redirect til den nye list
-                window.location.href = "/" + name;
-            });
-
+            alert("Ny liste tilføjet: " + name);
             input.value = "";
+
+            // Redirect til den nye liste
+            window.location.href = "/" + name;
         }
     </script>
 </body>
