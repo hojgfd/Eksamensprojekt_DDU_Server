@@ -98,6 +98,11 @@ def get_tasks(list_name):
 # -------------------------
 # Forside
 @app.route('/')
+def landing():
+    return render_template('landing.html')
+
+
+@app.route('/todo')
 def home():
     conn = sqlite3.connect(DB)
     cursor = conn.cursor()
@@ -106,11 +111,23 @@ def home():
     conn.close()
     return render_template('home.html', lists=lists)
 
-# Dynamisk liste
-@app.route('/<list_name>')
+
+@app.route('/todo/<list_name>')
 def show_list(list_name):
     todos = get_tasks(list_name)
     return render_template('list.html', todos=todos, list_name=list_name)
+
+
+@app.route('/focus')
+def focus():
+    return render_template('focus.html')
+def home():
+    conn = sqlite3.connect(DB)
+    cursor = conn.cursor()
+    cursor.execute("SELECT name FROM todolists")
+    lists = [row[0] for row in cursor.fetchall()]
+    conn.close()
+    return render_template('home.html', lists=lists)
 
 # Tilføj todo
 @app.route('/add-todo', methods=['POST'])
