@@ -58,7 +58,6 @@
             max-width: 400px;
         }
 
-        /* TODO CARDS */
         .todo-card {
             background-color: #e8f5e9;
             border-left: 6px solid #43a047;
@@ -69,10 +68,6 @@
             justify-content: space-between;
             align-items: center;
             transition: all 0.3s ease;
-        }
-
-        .todo-card:hover {
-            transform: scale(1.02);
         }
 
         .todo-card.completed {
@@ -148,20 +143,20 @@
         <p class="empty">Ingen opgaver endnu</p>
         {% endfor %}
 
-<div style="text-align: center; margin-top: 20px;">
-    <a href="{{ url_for('home') }}" style="
-        display: inline-block;
-        padding: 10px 20px;
-        border: 2px solid #2e7d32;
-        color: #2e7d32;
-        text-decoration: none;
-        border-radius: 6px;
-        transition: 0.3s;
-    " onmouseover="this.style.backgroundColor='#2e7d32'; this.style.color='white';"
-       onmouseout="this.style.backgroundColor='transparent'; this.style.color='#2e7d32';">
-        ← Tilbage til to-do oversigt
-    </a>
-</div>
+        <div style="text-align: center; margin-top: 20px;">
+            <a href="{{ url_for('home') }}" style="
+                display: inline-block;
+                padding: 10px 20px;
+                border: 2px solid #2e7d32;
+                color: #2e7d32;
+                text-decoration: none;
+                border-radius: 6px;
+                transition: 0.3s;
+            " onmouseover="this.style.backgroundColor='#2e7d32'; this.style.color='white';"
+               onmouseout="this.style.backgroundColor='transparent'; this.style.color='#2e7d32';">
+                ← Tilbage til to-do oversigt
+            </a>
+        </div>
 
     </div>
 
@@ -175,34 +170,22 @@
         }
 
         function deleteTask(taskId, btn) {
-
             const card = btn.closest('.todo-card');
 
-            // Hvis allerede rød → slet
             if (btn.classList.contains("delete-confirm")) {
-
-                // animation
                 card.classList.add("removing");
-
                 setTimeout(() => {
                     fetch(`/delete-todo/{{ list_name }}/${taskId}`, { method: 'POST' })
                     .then(res => {
-                        if (res.ok) {
-                            card.remove(); // fjern uden reload 🔥
-                        } else {
-                            alert("Kunne ikke slette");
-                        }
+                        if (res.ok) card.remove();
+                        else alert("Kunne ikke slette");
                     });
                 }, 300);
-
                 return;
             }
 
-            // Første klik → gør rød
             btn.classList.add("delete-confirm");
             btn.innerText = "Slet?";
-
-            // reset efter 3 sek
             setTimeout(() => {
                 btn.classList.remove("delete-confirm");
                 btn.innerText = "🗑️";
@@ -210,28 +193,32 @@
         }
 
         function updateListName() {
-    const input = document.getElementById('list-name-input');
-    const newName = input.value.trim();
-    const oldName = "{{ list_name }}";
+            const input = document.getElementById('list-name-input');
+            const newName = input.value.trim();
+            const oldName = "{{ list_name }}";
 
-    if (!newName) {
-        alert("Navn må ikke være tomt!");
-        return;
-    }
+            if (!newName) {
+                alert("Navn må ikke være tomt!");
+                return;
+            }
 
-    // Send til backend
-    const formData = new URLSearchParams();
-    formData.append("old_name", oldName);
-    formData.append("new_name", newName);
+            const formData = new URLSearchParams();
+            formData.append("old_name", oldName);
+            formData.append("new_name", newName);
 
-    fetch('/rename-list', {
-        method: 'POST',
-        body: formData
-    }).then(() => {
-        // Redirect til ny URL
-        window.location.href = "/" + newName;
-    });
-}
+            fetch('/rename-list', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => {
+                if (res.ok) {
+                    // Redirect til den nye liste
+                    window.location.href = `/todo/${newName}`;
+                } else {
+                    alert("Kunne ikke gemme navnet");
+                }
+            });
+        }
     </script>
 </body>
 </html>
