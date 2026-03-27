@@ -212,6 +212,114 @@ def api_heartrate():
         {"hr": hr, "time": ts} for hr, ts in data
     ])
 
+# Hent alle todo-lister
+@app.route('/api/todolists', methods=['GET'])
+def api_get_todolists():
+    conn = sqlite3.connect(DB)
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, name FROM todolists")
+    lists = [{"id": lid, "name": name} for lid, name in cursor.fetchall()]
+    conn.close()
+    return jsonify(lists)
+
+# Opret en ny todo-liste
+@app.route('/api/todolists', methods=['POST'])
+def api_create_todolist():
+    data = request.json
+    name = data.get("name")
+    if not name:
+        return jsonify({"error": "name is required"}), 400
+
+    conn = sqlite3.connect(DB)
+    cursor = conn.cursor()
+    try:
+        cursor.execute("INSERT INTO todolists (name) VALUES (?)", (name,))
+        conn.commit()
+        todolist_id = cursor.lastrowid
+    except sqlite3.IntegrityError:
+        conn.close()
+        return jsonify({"error": "Todo list already exists"}), 409
+    conn.close()
+
+    return jsonify({"id": todolist_id, "name": name}), 201
+
+# Slet en todo-liste
+@app.route('/api/todolists/<int:list_id>', methods=['DELETE'])
+def api_delete_todolist(list_id):
+    conn = sqlite3.connect(DB)
+    cursor = conn.cursor()
+    # Slet tasks først (foreign key)
+    cursor.execute("DELETE FROM tasks WHERE todolist_id=?", (list_id,))
+    # Slet selve listen
+    cursor.execute("DELETE FROM todolists WHERE id=?", (list_id,))
+    conn.commit()
+    conn.close()
+    return jsonify({"status": "deleted"})
+
+# Hent tasks for en liste
+@app.route('/api/todolists/<int:list_id>/tasks', methods=['GET'])
+def api_get_tasks(list_id):
+    conn = sqlite3.connect(DB)
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, text, completed FROM tasks WHERE todolist_id=?", (list_id,))
+    tasks = [{"id": tid, "text": text, "completed": bool(completed)}
+             for tid, text, completed in cursor.fetchall()]
+    conn.close()
+    return jsonify(tasks)
+
+# Tilføj task til en liste
+@app.route('/api/todolists/<int:list_id>/tasks', methods=['POST'])
+def api_add_task(list_id):
+    data = request.json
+    text = data.get("text")
+    if not text:
+        return jsonify({"error": "text is required"}), 400
+
+    conn = sqlite3.connect(DB)
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO tasks (todolist_id, text, completed) VALUES (?, ?, ?)",
+        (list_id, text, 0)
+    )
+    conn.commit()
+    task_id = cursor.lastrowid
+    conn.close()
+
+    return jsonify({"id": task_id, "text": text, "completed": False, "todolist_id": list_id}), 201
+
+# Opdater en task (fx markér som completed)
+@app.route('/api/tasks/<int:task_id>', methods=['PATCH'])
+def api_update_task(task_id):
+    data = request.json
+    conn = sqlite3.connect(DB)
+    cursor = conn.cursor()
+
+    if "completed" in data:
+        cursor.execute("UPDATE tasks SET completed=? WHERE id=?", (int(data["completed"]), task_id))
+    if "text" in data:
+        cursor.execute("UPDATE tasks SET text=? WHERE id=?", (data["text"], task_id))
+
+    conn.commit()
+    cursor.execute("SELECT id, todolist_id, text, completed FROM tasks WHERE id=?", (task_id,))
+    row = cursor.fetchone()
+    conn.close()
+
+    if row:
+        tid, todolist_id, text, completed = row
+        return jsonify({"id": tid, "todolist_id": todolist_id, "text": text, "completed": bool(completed)})
+    else:
+        return jsonify({"error": "Task not found"}), 404
+
+# Slet en task
+@app.route('/api/tasks/<int:task_id>', methods=['DELETE'])
+def api_delete_task(task_id):
+    conn = sqlite3.connect(DB)
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM tasks WHERE id=?", (task_id,))
+    conn.commit()
+    conn.close()
+    return jsonify({"status": "deleted"})
+
 @app.route('/api/heartrate', methods=['POST'])
 def add_heartrate():
     data = request.json
