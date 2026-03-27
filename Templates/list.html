@@ -3,89 +3,165 @@
 <head>
     <title>{{ list_name }} - TODO</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 30px; }
-        table { border-collapse: collapse; width: 100%; max-width: 600px; }
-        th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
-        th { background-color: #f0f0f0; }
-        button { padding: 3px 8px; cursor: pointer; }
-        .completed { text-decoration: line-through; color: gray; }
-        #list-name-input { font-size: 1.2em; padding: 4px; }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background-color: #f4f7f6;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2e7d32;
+        }
+
+        .list-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            font-size: 1em;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            background-color: #43a047;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-left: 5px;
+        }
+
+        button:hover {
+            background-color: #2e7d32;
+        }
+
+        .todo-form {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 25px;
+        }
+
+        .todo-form input {
+            flex: 1;
+            max-width: 400px;
+        }
+
+        /* TODO CARDS */
+        .todo-card {
+            background-color: #e8f5e9;
+            border-left: 6px solid #43a047;
+            padding: 15px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: 0.2s;
+        }
+
+        .todo-card.completed {
+            background-color: #c8e6c9;
+            text-decoration: line-through;
+            color: gray;
+        }
+
+        .todo-text {
+            flex: 1;
+        }
+
+        .actions button {
+            margin-left: 5px;
+        }
+
+        .back {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #2e7d32;
+            text-decoration: none;
+        }
+
+        .back:hover {
+            text-decoration: underline;
+        }
+
+        .empty {
+            text-align: center;
+            color: gray;
+        }
     </style>
 </head>
 <body>
-    <h1>
-        Liste:
-        <input id="list-name-input" type="text" value="{{ list_name }}">
-        <button type="button" onclick="updateListName()">Gem</button>
-    </h1>
+    <div class="container">
 
-    <!-- Tilføj ny todo -->
-    <form action="/add-todo" method="post" style="margin-bottom: 20px;">
-        <input type="text" name="text" placeholder="Skriv en opgave" required>
-        <input type="hidden" name="list_name" value="{{ list_name }}">
-        <button type="submit">Tilføj</button>
-    </form>
+        <div class="list-header">
+            <h1>
+                <input id="list-name-input" type="text" value="{{ list_name }}">
+                <button onclick="updateListName()">Gem</button>
+            </h1>
+        </div>
 
-    <!-- Todos tabel -->
-    <table>
-        <thead>
-            <tr>
-                <th>Opgave</th>
-                <th>Færdig</th>
-                <th>Handling</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for todo in todos %}
-            <tr class="{% if todo.completed %}completed{% endif %}">
-                <td>{{ todo.text }}</td>
-                <td style="text-align: center;">
-                    <button onclick="toggleComplete({{ todo.id }})">
-                        {% if todo.completed %}✔{% else %}❏{% endif %}
-                    </button>
-                </td>
-                <td style="text-align: center;">
-                    <button onclick="deleteTask({{ todo.id }})">🗑️</button>
-                </td>
-            </tr>
-            {% else %}
-            <tr><td colspan="3" style="text-align: center;">Ingen opgaver endnu</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
+        <!-- Tilføj todo -->
+        <form class="todo-form" action="/add-todo" method="post">
+            <input type="text" name="text" placeholder="Skriv en opgave..." required>
+            <input type="hidden" name="list_name" value="{{ list_name }}">
+            <button type="submit">Tilføj</button>
+        </form>
 
-    <a href="/">← Tilbage til forsiden</a>
+        <!-- TODO LIST -->
+        {% for todo in todos %}
+        <div class="todo-card {% if todo.completed %}completed{% endif %}">
+            <div class="todo-text">{{ todo.text }}</div>
+            <div class="actions">
+                <button onclick="toggleComplete({{ todo.id }})">
+                    {% if todo.completed %}✔{% else %}❏{% endif %}
+                </button>
+                <button onclick="deleteTask({{ todo.id }})">🗑️</button>
+            </div>
+        </div>
+        {% else %}
+        <p class="empty">Ingen opgaver endnu</p>
+        {% endfor %}
+
+        <a class="back" href="/">← Tilbage til forsiden</a>
+    </div>
 
     <script>
-        // Toggle completed status
         function toggleComplete(taskId) {
             fetch(`/toggle-todo/{{ list_name }}/${taskId}`, { method: 'POST' })
             .then(res => {
                 if (res.ok) location.reload();
-                else alert("Kunne ikke opdatere opgaven.");
+                else alert("Kunne ikke opdatere");
             });
         }
 
-        // Slet en todo
         function deleteTask(taskId) {
-            if (!confirm("Er du sikker på, at du vil slette denne opgave?")) return;
+            if (!confirm("Slet opgaven?")) return;
             fetch(`/delete-todo/{{ list_name }}/${taskId}`, { method: 'POST' })
             .then(res => {
                 if (res.ok) location.reload();
-                else alert("Kunne ikke slette opgaven.");
+                else alert("Kunne ikke slette");
             });
         }
 
-        // Opdater liste navn (kun frontend for nu)
         function updateListName() {
-            const input = document.getElementById('list-name-input');
-            const newName = input.value.trim();
+            const newName = document.getElementById('list-name-input').value.trim();
             if (!newName) {
-                alert("Listenavn må ikke være tomt!");
+                alert("Navn må ikke være tomt!");
                 return;
             }
             alert("Listenavn ændret til: " + newName);
-            // For at ændre permanent i DB, skal du lave en route i Flask
         }
     </script>
 </body>

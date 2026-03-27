@@ -92,6 +92,7 @@ def show_list(list_name):
 @app.route('/add-todo', methods=['POST'])
 def add_todo():
     list_name = request.form.get('list_name').strip()
+    print(list_name)
     text = request.form.get('text').strip()
     if not list_name or not text:
         return redirect(url_for('home'))
