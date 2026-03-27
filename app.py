@@ -7,9 +7,8 @@ app = Flask(__name__, template_folder=os.path.join(os.path.dirname(__file__), 't
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB = os.path.join(BASE_DIR, "data.db")
 
-# -------------------------
+
 # INIT DATABASE
-# -------------------------
 def init_db():
     conn = sqlite3.connect(DB)
     cursor = conn.cursor()
