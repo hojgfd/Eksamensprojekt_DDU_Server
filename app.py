@@ -121,13 +121,7 @@ def show_list(list_name):
 @app.route('/focus')
 def focus():
     return render_template('focus.html')
-def home():
-    conn = sqlite3.connect(DB)
-    cursor = conn.cursor()
-    cursor.execute("SELECT name FROM todolists")
-    lists = [row[0] for row in cursor.fetchall()]
-    conn.close()
-    return render_template('home.html', lists=lists)
+
 
 # Tilføj todo
 @app.route('/add-todo', methods=['POST'])

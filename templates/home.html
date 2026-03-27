@@ -70,7 +70,7 @@
             <select id="list-select" name="list">
                 <option value="">Vælg liste...</option>
                 {% for l in lists %}
-                <option value="/{{ l }}">{{ l }}</option>
+                <option value="/todo/{{ l }}">{{ l }}</option>
                 {% endfor %}
             </select>
             <button type="button" onclick="goToList()">Åbn</button>
@@ -109,7 +109,7 @@
             // Tilføj til dropdown
             const select = document.getElementById('list-select');
             const option = document.createElement("option");
-            option.value = "/" + name;
+            option.value = "/todo/" + name;
             option.textContent = name;
             select.appendChild(option);
 
@@ -117,7 +117,7 @@
             input.value = "";
 
             // Redirect til den nye liste
-            window.location.href = "/" + name;
+            window.location.href = "/todo/" + name;
         }
         function deleteList() {
     const select = document.getElementById('list-select');
