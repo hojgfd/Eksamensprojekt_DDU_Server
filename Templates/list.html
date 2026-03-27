@@ -57,7 +57,7 @@
     <a href="/">← Tilbage til forsiden</a>
 
     <script>
-        // Toggle completed status ()
+        // Toggle completed status
         function toggleComplete(taskId) {
             fetch(`/toggle-todo/{{ list_name }}/${taskId}`, { method: 'POST' })
             .then(res => {
