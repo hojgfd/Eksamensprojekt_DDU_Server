@@ -74,6 +74,8 @@
                 {% endfor %}
             </select>
             <button type="button" onclick="goToList()">Åbn</button>
+<button type="button" onclick="deleteList()" style="background-color:#e53935;">Slet</button>
+
         </div>
 
         <h2>Opret ny liste</h2>
@@ -117,6 +119,61 @@
             // Redirect til den nye liste
             window.location.href = "/" + name;
         }
+        function deleteList() {
+    const select = document.getElementById('list-select');
+    const url = select.value;
+
+    if (!url) {
+        alert("Vælg en liste først!");
+        return;
+    }
+
+    const listName = url.replace("/", "");
+
+    // confirm (kan vi også lave fancy senere)
+    if (!confirm("Er du sikker på at du vil slette listen?")) return;
+
+    fetch('/delete-list', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `list_name=${encodeURIComponent(listName)}`
+    })
+    .then(res => res.json())
+    .then(() => {
+        alert("Liste slettet!");
+
+        // fjern fra dropdown
+        select.remove(select.selectedIndex);
+    });
+}
+    function deleteList() {
+    const select = document.getElementById('list-select');
+    const url = select.value;
+
+    if (!url) {
+        alert("Vælg en liste først!");
+        return;
+    }
+
+    const listName = url.replace("/", "");
+
+    // confirm (kan vi også lave fancy senere)
+    if (!confirm("Er du sikker på at du vil slette listen?")) return;
+
+    fetch('/delete-list', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `list_name=${encodeURIComponent(listName)}`
+    })
+    .then(res => res.json())
+    .then(() => {
+        alert("Liste slettet!");
+
+        // fjern fra dropdown
+        select.remove(select.selectedIndex);
+    });
+}
+
     </script>
 </body>
 </html>

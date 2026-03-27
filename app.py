@@ -2,16 +2,13 @@ from flask import Flask, render_template, request, redirect, url_for, jsonify
 import sqlite3
 import os
 from datetime import datetime, timedelta
-import base64
-import matplotlib.pyplot as plt
-import io
 
 app = Flask(__name__, template_folder=os.path.join(os.path.dirname(__file__), 'templates'))
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB = os.path.join(BASE_DIR, "data.db")
 
 
-# INIT DATABASE ()
+# INIT DATABASE
 def init_db():
     conn = sqlite3.connect(DB)
     cursor = conn.cursor()
@@ -64,7 +61,7 @@ init_db()
 # -------------------------
 # HJÆLPE-FUNKTIONER
 # -------------------------
-def get_todolist_id(name):
+def get_todolist_id(name, create_if_missing=True):
     conn = sqlite3.connect(DB)
     cursor = conn.cursor()
     cursor.execute("SELECT id FROM todolists WHERE name=?", (name,))
@@ -72,26 +69,27 @@ def get_todolist_id(name):
     if row:
         todolist_id = row[0]
     else:
-        # Opret ny liste hvis den ikke findes
-        cursor.execute("INSERT INTO todolists (name) VALUES (?)", (name,))
-        todolist_id = cursor.lastrowid
-        conn.commit()
+        if create_if_missing:
+            cursor.execute("INSERT INTO todolists (name) VALUES (?)", (name,))
+            todolist_id = cursor.lastrowid
+            conn.commit()
+        else:
+            todolist_id = None
     conn.close()
     return todolist_id
 
+
 def get_tasks(list_name):
+    todolist_id = get_todolist_id(list_name, create_if_missing=False)
+    if not todolist_id:
+        return []
     conn = sqlite3.connect(DB)
     cursor = conn.cursor()
-    cursor.execute("SELECT id FROM todolists WHERE name=?", (list_name,))
-    row = cursor.fetchone()
-    if not row:
-        conn.close()
-        return []
-    todolist_id = row[0]
     cursor.execute("SELECT id, text, completed FROM tasks WHERE todolist_id=?", (todolist_id,))
     todos = [{"id": tid, "text": text, "completed": completed} for tid, text, completed in cursor.fetchall()]
     conn.close()
     return todos
+
 
 # -------------------------
 # ROUTES
@@ -114,6 +112,8 @@ def home():
 
 @app.route('/todo/<list_name>')
 def show_list(list_name):
+    # Opret listen hvis den ikke findes
+    get_todolist_id(list_name)
     todos = get_tasks(list_name)
     return render_template('list.html', todos=todos, list_name=list_name)
 
@@ -239,6 +239,34 @@ def add_heartrate():
     conn.close()
 
     return jsonify({"status": "ok"})
+
+
+# Slet liste
+@app.route('/delete-list', methods=['POST'])
+def delete_list():
+    list_name = request.form.get('list_name')
+
+    conn = sqlite3.connect(DB)
+    cursor = conn.cursor()
+
+    # Find liste id
+    cursor.execute("SELECT id FROM todolists WHERE name=?", (list_name,))
+    row = cursor.fetchone()
+
+    if row:
+        todolist_id = row[0]
+
+        # Slet tasks først (foreign key)
+        cursor.execute("DELETE FROM tasks WHERE todolist_id=?", (todolist_id,))
+
+        # Slet selve listen
+        cursor.execute("DELETE FROM todolists WHERE id=?", (todolist_id,))
+
+        conn.commit()
+
+    conn.close()
+
+    return jsonify({"status": "deleted"})
 
 
 if __name__ == '__main__':
