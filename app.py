@@ -1,7 +1,10 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 import sqlite3
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
+import base64
+import matplotlib.pyplot as plt
+import io
 
 app = Flask(__name__, template_folder=os.path.join(os.path.dirname(__file__), 'templates'))
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -42,15 +45,15 @@ def init_db():
     """)
 
     # Indsæt dummy data hvis tabellen er tom
-    cursor.execute("SELECT COUNT(*) FROM heartrate")
-    if cursor.fetchone()[0] == 0:
-        dummy_data = [
-            (72, datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
-            (85, datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
-            (90, datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
-            (65, datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
-        ]
-        cursor.executemany("INSERT INTO heartrate (hr, timestamp) VALUES (?, ?)", dummy_data)
+    #cursor.execute("SELECT COUNT(*) FROM heartrate")
+    #if cursor.fetchone()[0] == 0:
+     #   dummy_data = [
+      #      (72, datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
+       #     (85, datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
+        #    (90, datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
+         #   (65, datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
+        #]
+        #cursor.executemany("INSERT INTO heartrate (hr, timestamp) VALUES (?, ?)", dummy_data)
 
 
     conn.commit()
@@ -153,15 +156,53 @@ def toggle_todo(list_name, task_id):
 
 @app.route('/heartratedata')
 def heartratedata():
+    return render_template("heartrate.html")
+
+@app.route('/api/heartrate')
+def api_heartrate():
+    hours = int(request.args.get("hours", 24))
+
     conn = sqlite3.connect(DB)
     cursor = conn.cursor()
 
-    cursor.execute("SELECT hr, timestamp FROM heartrate ORDER BY timestamp DESC")
-    data = cursor.fetchall()
+    time_limit = datetime.now() - timedelta(hours=hours)
 
+    cursor.execute("""
+        SELECT hr, timestamp 
+        FROM heartrate 
+        WHERE timestamp >= ?
+        ORDER BY timestamp
+    """, (time_limit.strftime("%Y-%m-%d %H:%M:%S"),))
+
+    data = cursor.fetchall()
     conn.close()
 
-    return render_template("heartrate.html", data=data)
+    return jsonify([
+        {"hr": hr, "time": ts} for hr, ts in data
+    ])
+
+@app.route('/api/heartrate', methods=['POST'])
+def add_heartrate():
+    data = request.json
+
+    hr = data.get("hr")
+
+    if not hr:
+        return jsonify({"error": "Missing HR"}), 400
+
+    conn = sqlite3.connect(DB)
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "INSERT INTO heartrate (hr, timestamp) VALUES (?, ?)",
+        (hr, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    )
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"status": "ok"})
+
 
 if __name__ == '__main__':
     app.run(debug=True)
