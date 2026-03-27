@@ -59,11 +59,47 @@
         option {
             font-size: 1em;
         }
+
+        /* NOTIFIKATION */
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #43a047;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .notification.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Vælg din TODO-liste</h1>
+
+        <!-- Tilbage til forsiden -->
+        <div style="text-align: center; margin-bottom: 20px;">
+            <a href="{{ url_for('landing') }}" style="
+                display: inline-block;
+                padding: 10px 20px;
+                background-color: #2e7d32;
+                color: white;
+                text-decoration: none;
+                border-radius: 6px;
+                transition: 0.3s;
+            " onmouseover="this.style.backgroundColor='#43a047'" onmouseout="this.style.backgroundColor='#2e7d32'">
+                ← Tilbage til forsiden
+            </a>
+        </div>
 
         <!-- Dropdown for eksisterende lister -->
         <div class="dropdown-container">
@@ -74,8 +110,7 @@
                 {% endfor %}
             </select>
             <button type="button" onclick="goToList()">Åbn</button>
-<button type="button" onclick="deleteList()" style="background-color:#e53935;">Slet</button>
-
+            <button type="button" id="delete-btn" style="background-color:#e53935;">Slet</button>
         </div>
 
         <h2>Opret ny liste</h2>
@@ -84,6 +119,9 @@
             <button type="button" onclick="addNewList()">Tilføj liste</button>
         </div>
     </div>
+
+    <!-- NOTIFIKATION -->
+    <div id="notification" class="notification"></div>
 
     <script>
         // Gå til valgt liste
@@ -97,7 +135,7 @@
             window.location.href = url;
         }
 
-        // Tilføj ny liste (kun frontend / fake)
+        // Tilføj ny liste
         function addNewList() {
             const input = document.getElementById('new-list-name');
             const name = input.value.trim();
@@ -106,74 +144,71 @@
                 return;
             }
 
-            // Tilføj til dropdown
             const select = document.getElementById('list-select');
             const option = document.createElement("option");
             option.value = "/todo/" + name;
             option.textContent = name;
             select.appendChild(option);
 
-            alert("Ny liste tilføjet: " + name);
             input.value = "";
-
-            // Redirect til den nye liste
             window.location.href = "/todo/" + name;
         }
-        function deleteList() {
-    const select = document.getElementById('list-select');
-    const url = select.value;
 
-    if (!url) {
-        alert("Vælg en liste først!");
-        return;
-    }
+        // -------------------------
+        // NY DELETE KNAP - 2 KLIK MED NOTIFIKATION
+        // -------------------------
+        let deleteClicked = false;
+        const deleteBtn = document.getElementById("delete-btn");
+        const selectElem = document.getElementById('list-select');
+        const notification = document.getElementById("notification");
 
-    const listName = url.replace("/", "");
+        function showNotification(message) {
+            notification.innerText = message;
+            notification.classList.add("show");
+            setTimeout(() => notification.classList.remove("show"), 3000);
+        }
 
-    // confirm (kan vi også lave fancy senere)
-    if (!confirm("Er du sikker på at du vil slette listen?")) return;
+        deleteBtn.addEventListener("click", function() {
+            const url = selectElem.value;
+            if (!url) return; // ingen liste valgt
 
-    fetch('/delete-list', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `list_name=${encodeURIComponent(listName)}`
-    })
-    .then(res => res.json())
-    .then(() => {
-        alert("Liste slettet!");
+            const listName = url.replace("/todo/", "");
 
-        // fjern fra dropdown
-        select.remove(select.selectedIndex);
-    });
-}
-    function deleteList() {
-    const select = document.getElementById('list-select');
-    const url = select.value;
+            if (!deleteClicked) {
+                // Første klik → ændrer kun tekst og farve
+                deleteClicked = true;
+                deleteBtn.innerText = "Klik igen for at slette";
+                deleteBtn.style.backgroundColor = "#d32f2f";
 
-    if (!url) {
-        alert("Vælg en liste først!");
-        return;
-    }
+                // nulstil efter 5 sek
+                setTimeout(() => {
+                    deleteClicked = false;
+                    deleteBtn.innerText = "Slet";
+                    deleteBtn.style.backgroundColor = "#e53935";
+                }, 5000);
+                return;
+            }
 
-    const listName = url.replace("/", "");
+            // Andet klik → slet listen
+            fetch('/delete-list', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `list_name=${encodeURIComponent(listName)}`
+            })
+            .then(res => res.json())
+            .then(() => {
+                // fjern fra dropdown
+                selectElem.remove(selectElem.selectedIndex);
 
-    // confirm (kan vi også lave fancy senere)
-    if (!confirm("Er du sikker på at du vil slette listen?")) return;
+                // nulstil knap
+                deleteBtn.innerText = "Slet";
+                deleteBtn.style.backgroundColor = "#e53935";
+                deleteClicked = false;
 
-    fetch('/delete-list', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `list_name=${encodeURIComponent(listName)}`
-    })
-    .then(res => res.json())
-    .then(() => {
-        alert("Liste slettet!");
-
-        // fjern fra dropdown
-        select.remove(select.selectedIndex);
-    });
-}
-
+                // vis notifikation
+                showNotification(`Listen "${listName}" er blevet slettet!`);
+            });
+        });
     </script>
 </body>
 </html>
