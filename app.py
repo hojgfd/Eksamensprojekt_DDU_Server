@@ -32,6 +32,27 @@ def init_db():
         )
     """)
 
+    # Heart rate table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS heartrate (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            hr INTEGER,
+            timestamp TEXT
+        )
+    """)
+
+    # Indsæt dummy data hvis tabellen er tom
+    cursor.execute("SELECT COUNT(*) FROM heartrate")
+    if cursor.fetchone()[0] == 0:
+        dummy_data = [
+            (72, datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
+            (85, datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
+            (90, datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
+            (65, datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
+        ]
+        cursor.executemany("INSERT INTO heartrate (hr, timestamp) VALUES (?, ?)", dummy_data)
+
+
     conn.commit()
     conn.close()
 
@@ -128,6 +149,18 @@ def toggle_todo(list_name, task_id):
         conn.commit()
     conn.close()
     return jsonify({"status": "toggled"})
+
+@app.route('/heartratedata')
+def heartratedata():
+    conn = sqlite3.connect(DB)
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT hr, timestamp FROM heartrate ORDER BY timestamp DESC")
+    data = cursor.fetchall()
+
+    conn.close()
+
+    return render_template("heartrate.html", data=data)
 
 if __name__ == '__main__':
     app.run(debug=True)
