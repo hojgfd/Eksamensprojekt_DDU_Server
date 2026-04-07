@@ -1,20 +1,120 @@
-<!-- HELE FIL FRA https://github.com/hojgfd/Eksamensprojekt-Informatik/blob/main/server/templates/login.html -->
+<!-- HELE FIL FRA https://github.com/hojgfd/Eksamensprojekt-Informatik/blob/main/server/templates/register.html -->
 <!DOCTYPE html>
 <html>
 <head>
     <title>Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f7f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 400px;
+            padding: 30px;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        h1 {
+            color: #2e7d32; /* mørkegrøn */
+            margin-bottom: 20px;
+        }
+
+        input[type="text"], input[type="password"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 1em;
+        }
+
+        button {
+            width: 100%;
+            background-color: #43a047; /* grøn */
+            color: white;
+            border: none;
+            padding: 12px;
+            font-size: 1em;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #2e7d32;
+        }
+
+        .link {
+            display: block;
+            margin-top: 15px;
+            color: #43a047;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .link:hover {
+            color: #2e7d32;
+        }
+
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #43a047;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .notification.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+    </style>
 </head>
 <body>
+    <div class="container">
+        <h1>Login</h1>
+        <form method="POST" id="login-form">
+            <input type="text" name="username" placeholder="Brugernavn" required>
+            <input type="password" name="password" placeholder="Kodeord" required>
+            <button type="submit">Login</button>
+        </form>
+        <a href="/register" class="link">Opret bruger</a>
+    </div>
 
-<h1>Login</h1>
+    <!-- Notifikation -->
+    <div id="notification" class="notification"></div>
 
-<form method="POST">
-    <input type="text" name="username" placeholder="Brugernavn" required><br>
-    <input type="password" name="password" placeholder="Kodeord" required><br>
-    <button type="submit">Login</button>
-</form>
+    <script>
+        // Optional: vis fejlmeddelelse som notifikation
+        const form = document.getElementById("login-form");
+        const notification = document.getElementById("notification");
 
-<a href="/register">Opret bruger</a>
-
+        form.addEventListener("submit", function(event) {
+            // Her kan du f.eks. tjekke input og vise notifikation
+            // notification.innerText = "Login mislykkedes!";
+            // notification.classList.add("show");
+            // setTimeout(() => notification.classList.remove("show"), 3000);
+        });
+    </script>
 </body>
 </html>
