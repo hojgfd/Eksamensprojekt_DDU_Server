@@ -2,16 +2,41 @@ from flask import Flask, render_template, request, redirect, url_for, jsonify
 import sqlite3
 import os
 from datetime import datetime, timedelta
+from auth import auth # fra https://github.com/hojgfd/Eksamensprojekt-Informatik/blob/main/server/flask_app.py
 
 app = Flask(__name__, template_folder=os.path.join(os.path.dirname(__file__), 'templates'))
+app.secret_key = "minmegethemmeligenøgle" # fra https://github.com/hojgfd/Eksamensprojekt-Informatik/blob/main/server/flask_app.py
+app.register_blueprint(auth) # fra https://github.com/hojgfd/Eksamensprojekt-Informatik/blob/main/server/flask_app.py
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB = os.path.join(BASE_DIR, "data.db")
 
+def get_db(): #funktion fra https://github.com/hojgfd/Eksamensprojekt-Informatik/blob/main/server/database.py
+    conn = sqlite3.connect(DB)
+    conn.row_factory = sqlite3.Row
+    return conn
 
 # INIT DATABASE
 def init_db():
     conn = sqlite3.connect(DB)
     cursor = conn.cursor()
+
+    # Login system (fra https://github.com/hojgfd/Eksamensprojekt-Informatik/blob/main/server/database.py)
+    cursor.execute("""
+                 CREATE TABLE IF NOT EXISTS users
+                 (
+                     id
+                     INTEGER
+                     PRIMARY
+                     KEY
+                     AUTOINCREMENT,
+                     username
+                     TEXT
+                     UNIQUE,
+                     password
+                     TEXT
+                 )
+                 """)
 
     # Todo lists
     cursor.execute("""
