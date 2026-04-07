@@ -6,32 +6,75 @@ from auth import auth # fra https://github.com/hojgfd/Eksamensprojekt-Informatik
 
 app = Flask(__name__, template_folder=os.path.join(os.path.dirname(__file__), 'templates'))
 app.secret_key = "minmegethemmeligenøgle" # fra https://github.com/hojgfd/Eksamensprojekt-Informatik/blob/main/server/flask_app.py
+app.register_blueprint(auth) # fra https://github.com/hojgfd/Eksamensprojekt-Informatik/blob/main/server/flask_app.py
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB = os.path.join(BASE_DIR, "data.db")
 
+def get_db(): #funktion fra https://github.com/hojgfd/Eksamensprojekt-Informatik/blob/main/server/database.py
+    conn = sqlite3.connect(DB)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+# INIT DATABASE
 def init_db():
     conn = sqlite3.connect(DB)
     cursor = conn.cursor()
 
+    # Login system (fra https://github.com/hojgfd/Eksamensprojekt-Informatik/blob/main/server/database.py)
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS users (
+    CREATE TABLE IF NOT EXISTS todolists (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT,
+        user_id INTEGER,
+        FOREIGN KEY(user_id) REFERENCES users(id)
+    )
+""")
+
+    # Todo lists
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS todolists (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE,
-            password TEXT
+            name TEXT UNIQUE
         )
     """)
 
-    # resten af dine tables...
+    # Tasks
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS tasks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            todolist_id INTEGER,
+            text TEXT,
+            completed BOOLEAN DEFAULT 0,
+            FOREIGN KEY(todolist_id) REFERENCES todolists(id)
+        )
+    """)
+
+    # Heart rate table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS heartrate (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            hr INTEGER,
+            timestamp TEXT
+        )
+    """)
+
+    # Indsæt dummy data hvis tabellen er tom
+    #cursor.execute("SELECT COUNT(*) FROM heartrate")
+    #if cursor.fetchone()[0] == 0:
+     #   dummy_data = [
+      #      (72, datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
+       #     (85, datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
+        #    (90, datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
+         #   (65, datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
+        #]
+        #cursor.executemany("INSERT INTO heartrate (hr, timestamp) VALUES (?, ?)", dummy_data)
+
 
     conn.commit()
     conn.close()
 
 init_db()
-
-app.register_blueprint(auth) # fra https://github.com/hojgfd/Eksamensprojekt-Informatik/blob/main/server/flask_app.py
-
-
 
 # -------------------------
 # HJÆLPE-FUNKTIONER
@@ -87,7 +130,10 @@ def get_tasks(list_name):
 # Forside
 @app.route('/')
 def landing():
-    return render_template('landing.html')
+    if "user" not in session:
+        return redirect("/login")
+    else:
+        return render_template('landing.html')
 
 
 @app.route('/todo')
