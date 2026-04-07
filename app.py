@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask import Flask, render_template, request, redirect, url_for, jsonify, session
 import sqlite3
 import os
 from datetime import datetime, timedelta
@@ -6,102 +6,67 @@ from auth import auth # fra https://github.com/hojgfd/Eksamensprojekt-Informatik
 
 app = Flask(__name__, template_folder=os.path.join(os.path.dirname(__file__), 'templates'))
 app.secret_key = "minmegethemmeligenøgle" # fra https://github.com/hojgfd/Eksamensprojekt-Informatik/blob/main/server/flask_app.py
-app.register_blueprint(auth) # fra https://github.com/hojgfd/Eksamensprojekt-Informatik/blob/main/server/flask_app.py
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB = os.path.join(BASE_DIR, "data.db")
 
-def get_db(): #funktion fra https://github.com/hojgfd/Eksamensprojekt-Informatik/blob/main/server/database.py
-    conn = sqlite3.connect(DB)
-    conn.row_factory = sqlite3.Row
-    return conn
-
-# INIT DATABASE
 def init_db():
     conn = sqlite3.connect(DB)
     cursor = conn.cursor()
 
-    # Login system (fra https://github.com/hojgfd/Eksamensprojekt-Informatik/blob/main/server/database.py)
     cursor.execute("""
-                 CREATE TABLE IF NOT EXISTS users
-                 (
-                     id
-                     INTEGER
-                     PRIMARY
-                     KEY
-                     AUTOINCREMENT,
-                     username
-                     TEXT
-                     UNIQUE,
-                     password
-                     TEXT
-                 )
-                 """)
-
-    # Todo lists
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS todolists (
+        CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT UNIQUE
+            username TEXT UNIQUE,
+            password TEXT
         )
     """)
 
-    # Tasks
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS tasks (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            todolist_id INTEGER,
-            text TEXT,
-            completed BOOLEAN DEFAULT 0,
-            FOREIGN KEY(todolist_id) REFERENCES todolists(id)
-        )
-    """)
-
-    # Heart rate table
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS heartrate (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            hr INTEGER,
-            timestamp TEXT
-        )
-    """)
-
-    # Indsæt dummy data hvis tabellen er tom
-    #cursor.execute("SELECT COUNT(*) FROM heartrate")
-    #if cursor.fetchone()[0] == 0:
-     #   dummy_data = [
-      #      (72, datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
-       #     (85, datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
-        #    (90, datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
-         #   (65, datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
-        #]
-        #cursor.executemany("INSERT INTO heartrate (hr, timestamp) VALUES (?, ?)", dummy_data)
-
+    # resten af dine tables...
 
     conn.commit()
     conn.close()
 
 init_db()
 
+app.register_blueprint(auth) # fra https://github.com/hojgfd/Eksamensprojekt-Informatik/blob/main/server/flask_app.py
+
+
+
 # -------------------------
 # HJÆLPE-FUNKTIONER
 # -------------------------
 def get_todolist_id(name, create_if_missing=True):
+    if "user" not in session:
+        return None
+
+    user_id = session["user"]["id"]
+
     conn = sqlite3.connect(DB)
     cursor = conn.cursor()
-    cursor.execute("SELECT id FROM todolists WHERE name=?", (name,))
+
+    cursor.execute(
+        "SELECT id FROM todolists WHERE name=? AND user_id=?",
+        (name, user_id)
+    )
     row = cursor.fetchone()
+
     if row:
         todolist_id = row[0]
     else:
         if create_if_missing:
-            cursor.execute("INSERT INTO todolists (name) VALUES (?)", (name,))
+            cursor.execute(
+                "INSERT INTO todolists (name, user_id) VALUES (?, ?)",
+                (name, user_id)
+            )
             todolist_id = cursor.lastrowid
             conn.commit()
         else:
             todolist_id = None
+
     conn.close()
     return todolist_id
+
 
 
 def get_tasks(list_name):
@@ -129,7 +94,15 @@ def landing():
 def home():
     conn = sqlite3.connect(DB)
     cursor = conn.cursor()
-    cursor.execute("SELECT name FROM todolists")
+    if "user" not in session:
+        return redirect("/login")
+
+    user_id = session["user"]["id"]
+
+    cursor.execute(
+        "SELECT name FROM todolists WHERE user_id=?",
+        (user_id,)
+    )
     lists = [row[0] for row in cursor.fetchall()]
     conn.close()
     return render_template('home.html', lists=lists)
