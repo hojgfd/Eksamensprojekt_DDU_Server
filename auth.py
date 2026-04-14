@@ -3,18 +3,26 @@ from flask import Blueprint, render_template, request, redirect, session
 from models import create_user, get_user
 from werkzeug.security import check_password_hash
 
+
 auth = Blueprint("auth", __name__)
 
 @auth.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
+        username = request.form["username"].strip()
+        password = request.form["password"].strip()
+
+        if get_user(username):
+            return render_template(
+                "register.html",
+                error="Brugernavnet findes allerede!"
+            )
 
         create_user(username, password)
         return redirect("/login")
 
     return render_template("register.html")
+
 
 
 @auth.route("/login", methods=["GET", "POST"])
