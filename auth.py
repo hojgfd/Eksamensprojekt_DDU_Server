@@ -1,6 +1,7 @@
 #HELE FIL FRA https://github.com/hojgfd/Eksamensprojekt-Informatik/blob/main/server/auth.py
 from flask import Blueprint, render_template, request, redirect, session
 from models import create_user, get_user
+from werkzeug.security import check_password_hash
 
 auth = Blueprint("auth", __name__)
 
@@ -24,7 +25,7 @@ def login():
 
         user = get_user(username)
 
-        if user and user["password"] == password:
+        if user and check_password_hash(user["password"], password):
             session["user"] = {
                 "id": user["id"],
                 "username": user["username"]

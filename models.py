@@ -1,6 +1,7 @@
 #HELE FIL FRA https://github.com/hojgfd/Eksamensprojekt-Informatik/blob/main/server/models.py
 import os
 import sqlite3
+from werkzeug.security import generate_password_hash, check_password_hash
 
 def get_db():
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -11,9 +12,12 @@ def get_db():
 
 def create_user(username, password):
     db = get_db()
+
+    hashed_password = generate_password_hash(password)
+
     db.execute(
         "INSERT INTO users (username, password) VALUES (?, ?)",
-        (username, password)
+        (username, hashed_password)
     )
     db.commit()
     db.close()
