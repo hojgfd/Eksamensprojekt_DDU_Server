@@ -22,22 +22,33 @@ def init_db():
     cursor = conn.cursor()
 
     # Login system (fra https://github.com/hojgfd/Eksamensprojekt-Informatik/blob/main/server/database.py)
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS todolists (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT,
-        user_id INTEGER,
-        FOREIGN KEY(user_id) REFERENCES users(id)
-    )
-""")
 
-    # Todo lists
+    cursor.execute("""
+                   CREATE TABLE IF NOT EXISTS users
+                   (
+                       id
+                       INTEGER
+                       PRIMARY
+                       KEY
+                       AUTOINCREMENT,
+                       username
+                       TEXT
+                       UNIQUE,
+                       password
+                       TEXT
+                   )
+                   """)
+
+    #todo lists
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS todolists (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT UNIQUE
+            name TEXT,
+            user_id INTEGER,
+            FOREIGN KEY(user_id) REFERENCES users(id)
         )
     """)
+
 
     # Tasks
     cursor.execute("""
@@ -243,8 +254,8 @@ def api_heartrate():
     time_limit = datetime.now() - timedelta(hours=hours)
 
     cursor.execute("""
-        SELECT hr, timestamp 
-        FROM heartrate 
+        SELECT hr, timestamp
+        FROM heartrate
         WHERE timestamp >= ?
         ORDER BY timestamp
     """, (time_limit.strftime("%Y-%m-%d %H:%M:%S"),))
