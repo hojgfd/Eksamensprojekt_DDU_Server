@@ -197,7 +197,7 @@ def home():
 
 @app.route('/update_server', methods=["GET", "POST"])
 def update():
-    os.system('cd /home/shekib/mysite && git pull')
+    os.system('cd /home/Shekib/mysite && git pull')
     os.system("touch /var/www/shekib_pythonanywhere_com_wsgi.py")
     return 'Updated and reloaded'
 
