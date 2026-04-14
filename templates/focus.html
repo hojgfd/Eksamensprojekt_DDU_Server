@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fokus-mode</title>
+    <title>Fokus-mode data</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
             margin: 0;
@@ -13,193 +14,161 @@
             color: #111;
         }
 
-        .focus-page {
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 30px 20px;
-            box-sizing: border-box;
+        .page {
+            max-width: 1100px;
+            margin: 40px auto;
+            padding: 20px;
         }
 
-        .focus-card {
-            width: 100%;
-            max-width: 700px;
+        .card {
             background: white;
-            border-radius: 28px;
-            padding: 35px 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin: 0 0 10px 0;
             text-align: center;
         }
 
-        .focus-title {
-            font-size: 3.2rem;
-            margin: 0 0 10px 0;
-            font-weight: bold;
-        }
-
-        .focus-subtitle {
-            font-size: 1.2rem;
-            color: #444;
-            margin-bottom: 30px;
-        }
-
-        .status-box {
-            display: inline-block;
-            background-color: #edf7ee;
-            color: #1b5e20;
-            padding: 10px 18px;
-            border-radius: 999px;
-            font-weight: bold;
-            margin-bottom: 25px;
-        }
-
-        .timer-display {
-            font-size: 4rem;
-            font-weight: bold;
-            margin: 20px 0 30px 0;
-            color: #111;
-        }
-
-        .time-options {
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-            flex-wrap: wrap;
-            margin-bottom: 30px;
-        }
-
-        .time-btn {
-            background-color: #18b342;
-            color: white;
-            border: none;
-            border-radius: 14px;
-            padding: 14px 22px;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: 0.2s ease;
-            min-width: 90px;
-        }
-
-        .time-btn:hover {
-            background-color: #129536;
-            transform: translateY(-2px);
-        }
-
-        .time-btn.active {
-            background-color: #0d7c2b;
-            box-shadow: 0 0 0 4px rgba(24, 179, 66, 0.18);
-        }
-
-        .action-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 14px;
-            flex-wrap: wrap;
-            margin-bottom: 25px;
-        }
-
-        .action-btn {
-            border: none;
-            border-radius: 16px;
-            padding: 14px 26px;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: 0.2s ease;
-            font-weight: bold;
-        }
-
-        .start-btn {
-            background-color: #18b342;
-            color: white;
-        }
-
-        .start-btn:hover {
-            background-color: #129536;
-        }
-
-        .pause-btn {
-            background-color: #f0ad4e;
-            color: white;
-        }
-
-        .pause-btn:hover {
-            background-color: #d8922e;
-        }
-
-        .reset-btn {
-            background-color: #e53935;
-            color: white;
-        }
-
-        .reset-btn:hover {
-            background-color: #c62828;
-        }
-
-        .focus-info {
-            margin: 20px auto 30px auto;
-            max-width: 500px;
-            font-size: 1rem;
+        .subtitle {
+            text-align: center;
             color: #555;
-            line-height: 1.5;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+
+        .summary-box {
+            background: #18b342;
+            color: white;
+            border-radius: 18px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .summary-box h2 {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: normal;
+        }
+
+        .summary-box p {
+            margin: 10px 0 0 0;
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .chart-container {
+            margin: 30px 0;
+            background: #f8f8f8;
+            padding: 20px;
+            border-radius: 18px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 25px;
+            background: #fff;
+            overflow: hidden;
+            border-radius: 16px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 14px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #18b342;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f6f6f6;
         }
 
         .back-btn {
             display: inline-block;
+            margin-top: 30px;
             text-decoration: none;
             background-color: #18b342;
             color: white;
-            padding: 14px 30px;
-            border-radius: 18px;
+            padding: 14px 26px;
+            border-radius: 14px;
             font-weight: bold;
-            transition: 0.2s ease;
         }
 
-        .back-btn:hover {
-            background-color: #129536;
+        .empty-message {
+            text-align: center;
+            color: #666;
+            margin-top: 20px;
         }
 
-        @media (max-width: 600px) {
-            .focus-title {
-                font-size: 2.4rem;
+        @media (max-width: 700px) {
+            h1 {
+                font-size: 2.2rem;
             }
 
-            .timer-display {
-                font-size: 3rem;
+            .card {
+                padding: 20px;
             }
 
-            .focus-card {
-                padding: 25px 20px;
+            th, td {
+                font-size: 0.9rem;
+                padding: 10px;
             }
         }
     </style>
 </head>
 <body>
-    <div class="focus-page">
-        <div class="focus-card">
-            <h1 class="focus-title">Fokus-mode</h1>
-            <p class="focus-subtitle">Vælg en fokustid og start din arbejdsperiode</p>
+    <div class="page">
+        <div class="card">
+            <h1>Fokus-mode</h1>
+            <p class="subtitle">Data fra fokus-sessioner på PineTime</p>
 
-            <div class="status-box" id="statusText">Ikke startet</div>
-
-            <div class="timer-display" id="timer">25:00</div>
-
-            <div class="time-options">
-                <button class="time-btn" onclick="setFocusTime(15, this)">15 min</button>
-                <button class="time-btn active" onclick="setFocusTime(25, this)">25 min</button>
-                <button class="time-btn" onclick="setFocusTime(45, this)">45 min</button>
-                <button class="time-btn" onclick="setFocusTime(60, this)">60 min</button>
+            <div class="summary">
+                <div class="summary-box">
+                    <h2>Samlet tid i fokus-mode</h2>
+                    <p id="totalMinutes">0 min</p>
+                </div>
+                <div class="summary-box">
+                    <h2>Samlede distractions</h2>
+                    <p id="totalDistractions">0</p>
+                </div>
+                <div class="summary-box">
+                    <h2>Gennemsnit pr. dag</h2>
+                    <p id="avgMinutes">0 min</p>
+                </div>
             </div>
 
-            <div class="action-buttons">
-                <button class="action-btn start-btn" onclick="startTimer()">Start</button>
-                <button class="action-btn pause-btn" onclick="pauseTimer()">Pause</button>
-                <button class="action-btn reset-btn" onclick="resetTimer()">Nulstil</button>
+            <div class="chart-container">
+                <canvas id="focusChart"></canvas>
             </div>
 
-            <p class="focus-info">
-                Brug fokus-mode til at arbejde uden forstyrrelser i et valgt tidsrum.
-                Når tiden er gået, kan I senere koble det sammen med jeres Pinetime ur.
+            <table>
+                <thead>
+                    <tr>
+                        <th>Dato</th>
+                        <th>Tid i fokus-mode (min.)</th>
+                        <th>Distractions logged</th>
+                    </tr>
+                </thead>
+                <tbody id="focusTableBody"></tbody>
+            </table>
+
+            <p class="empty-message" id="emptyMessage" style="display:none;">
+                Ingen fokusdata endnu.
             </p>
 
             <a href="{{ url_for('landing') }}" class="back-btn">Tilbage</a>
@@ -207,71 +176,126 @@
     </div>
 
     <script>
-        let selectedMinutes = 25;
-        let totalSeconds = selectedMinutes * 60;
-        let timerInterval = null;
-        let isRunning = false;
+        let focusChart = null;
 
-        const timerDisplay = document.getElementById("timer");
-        const statusText = document.getElementById("statusText");
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            if (isNaN(date)) return dateString;
 
-        function updateDisplay() {
-            const minutes = Math.floor(totalSeconds / 60);
-            const seconds = totalSeconds % 60;
-            timerDisplay.textContent =
-                String(minutes).padStart(2, '0') + ":" + String(seconds).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, "0");
+            const month = String(date.getMonth() + 1).padStart(2, "0");
+            const year = String(date.getFullYear()).slice(-2);
+
+            return `${day}/${month}/${year}`;
         }
 
-        function setFocusTime(minutes, clickedButton) {
-            if (isRunning) return;
+        async function loadFocusData() {
+            const response = await fetch('/api/focus-data');
+            const data = await response.json();
 
-            selectedMinutes = minutes;
-            totalSeconds = minutes * 60;
-            updateDisplay();
-            statusText.textContent = "Klar til " + minutes + " min fokus";
+            const tbody = document.getElementById('focusTableBody');
+            const emptyMessage = document.getElementById('emptyMessage');
 
-            document.querySelectorAll(".time-btn").forEach(btn => {
-                btn.classList.remove("active");
+            tbody.innerHTML = "";
+
+            if (!data.length) {
+                emptyMessage.style.display = "block";
+                updateSummary([]);
+                drawChart([]);
+                return;
+            }
+
+            emptyMessage.style.display = "none";
+
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${formatDate(row.date)}</td>
+                    <td>${row.minutes}</td>
+                    <td>${row.distractions}</td>
+                `;
+                tbody.appendChild(tr);
             });
 
-            clickedButton.classList.add("active");
+            updateSummary(data);
+            drawChart(data);
         }
 
-        function startTimer() {
-            if (isRunning) return;
-            if (totalSeconds <= 0) return;
+        function updateSummary(data) {
+            const totalMinutes = data.reduce((sum, row) => sum + row.minutes, 0);
+            const totalDistractions = data.reduce((sum, row) => sum + row.distractions, 0);
+            const avgMinutes = data.length ? Math.round(totalMinutes / data.length) : 0;
 
-            isRunning = true;
-            statusText.textContent = "Fokus er i gang";
+            document.getElementById('totalMinutes').textContent = `${totalMinutes} min`;
+            document.getElementById('totalDistractions').textContent = totalDistractions;
+            document.getElementById('avgMinutes').textContent = `${avgMinutes} min`;
+        }
 
-            timerInterval = setInterval(() => {
-                totalSeconds--;
-                updateDisplay();
+        function drawChart(data) {
+            const labels = data.map(row => formatDate(row.date));
+            const minutesData = data.map(row => row.minutes);
+            const distractionsData = data.map(row => row.distractions);
 
-                if (totalSeconds <= 0) {
-                    clearInterval(timerInterval);
-                    isRunning = false;
-                    statusText.textContent = "Fokus færdigt";
-                    alert("Din fokus-tid er slut!");
+            const ctx = document.getElementById('focusChart').getContext('2d');
+
+            if (focusChart) {
+                focusChart.destroy();
+            }
+
+            focusChart = new Chart(ctx, {
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            type: 'line',
+                            label: 'Fokus-tid (min.)',
+                            data: minutesData,
+                            borderColor: '#18b342',
+                            backgroundColor: '#18b342',
+                            tension: 0.25,
+                            yAxisID: 'y'
+                        },
+                        {
+                            type: 'bar',
+                            label: 'Distractions',
+                            data: distractionsData,
+                            backgroundColor: '#f39c12',
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Minutter'
+                            }
+                        },
+                        y1: {
+                            beginAtZero: true,
+                            position: 'right',
+                            grid: {
+                                drawOnChartArea: false
+                            },
+                            title: {
+                                display: true,
+                                text: 'Distractions'
+                            }
+                        }
+                    }
                 }
-            }, 1000);
+            });
         }
 
-        function pauseTimer() {
-            clearInterval(timerInterval);
-            isRunning = false;
-            statusText.textContent = "Sat på pause";
-        }
-
-        function resetTimer() {
-            clearInterval(timerInterval);
-            isRunning = false;
-            totalSeconds = selectedMinutes * 60;
-            updateDisplay();
-            statusText.textContent = "Nulstil til " + selectedMinutes + " min";
-        }
-
-        updateDisplay();
+        loadFocusData();
     </script>
 </body>
 </html>

@@ -70,6 +70,38 @@ def init_db():
         )
     """)
 
+    # Fokus-sessioner
+    cursor.execute("""
+                   CREATE TABLE IF NOT EXISTS focus_sessions
+                   (
+                       id
+                       INTEGER
+                       PRIMARY
+                       KEY
+                       AUTOINCREMENT,
+                       session_date
+                       TEXT
+                       NOT
+                       NULL,
+                       minutes
+                       INTEGER
+                       NOT
+                       NULL,
+                       distractions
+                       INTEGER
+                       NOT
+                       NULL
+                       DEFAULT
+                       0,
+                       created_at
+                       TEXT
+                       NOT
+                       NULL
+                   )
+                   """)
+
+
+
     # Indsæt dummy data hvis tabellen er tom
     #cursor.execute("SELECT COUNT(*) FROM heartrate")
     #if cursor.fetchone()[0] == 0:
@@ -122,7 +154,6 @@ def get_todolist_id(name, create_if_missing=True):
     return todolist_id
 
 
-
 def get_tasks(list_name):
     todolist_id = get_todolist_id(list_name, create_if_missing=False)
     if not todolist_id:
@@ -172,10 +203,74 @@ def show_list(list_name):
     todos = get_tasks(list_name)
     return render_template('list.html', todos=todos, list_name=list_name)
 
-
 @app.route('/focus')
 def focus():
+    if "user" not in session:
+        return redirect("/login")
     return render_template('focus.html')
+
+@app.route('/api/focus-session', methods=['POST'])
+def api_add_focus_session():
+    data = request.get_json(silent=True) or {}
+
+    minutes = data.get("minutes")
+    distractions = data.get("distractions", 0)
+    session_date = data.get("date", datetime.now().strftime("%Y-%m-%d"))
+
+    try:
+        minutes = int(minutes)
+        distractions = int(distractions)
+    except (TypeError, ValueError):
+        return jsonify({"error": "minutes og distractions skal være tal"}), 400
+
+    if minutes < 0 or distractions < 0:
+        return jsonify({"error": "værdier må ikke være negative"}), 400
+
+    conn = sqlite3.connect(DB)
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        INSERT INTO focus_sessions (session_date, minutes, distractions, created_at)
+        VALUES (?, ?, ?, ?)
+    """, (
+        session_date,
+        minutes,
+        distractions,
+        datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    ))
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"status": "ok"}), 201
+
+
+@app.route('/api/focus-data', methods=['GET'])
+def api_focus_data():
+    conn = sqlite3.connect(DB)
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT 
+            session_date AS date,
+            SUM(minutes) AS total_minutes,
+            SUM(distractions) AS total_distractions
+        FROM focus_sessions
+        GROUP BY session_date
+        ORDER BY session_date
+    """)
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    return jsonify([
+        {
+            "date": row[0],
+            "minutes": row[1],
+            "distractions": row[2]
+        }
+        for row in rows
+    ])
 
 
 # Tilføj todo
