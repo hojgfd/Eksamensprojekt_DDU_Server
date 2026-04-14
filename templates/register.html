@@ -55,6 +55,11 @@
             margin-top: 10px;
         }
 
+
+.notification.error {
+    background-color: #e53935; /* rød ved fejl */
+}
+
         button:hover {
             background-color: #2e7d32;
         }
@@ -96,6 +101,16 @@
 <body>
     <div class="container">
         <h1>Opret Bruger</h1>
+
+{% if error %}
+    <div id="notification" class="notification error show">
+    {{ error }}
+</div>
+{% else %}
+    <div id="notification" class="notification"></div>
+{% endif %}
+
+
         <form method="POST" id="register-form">
             <input type="text" name="username" placeholder="Brugernavn" required>
             <input type="password" name="password" placeholder="Kodeord" required>
@@ -108,16 +123,15 @@
     <div id="notification" class="notification"></div>
 
     <script>
-        // Optional: vis notifikation hvis oprettelse fejler
-        const form = document.getElementById("register-form");
         const notification = document.getElementById("notification");
 
-        form.addEventListener("submit", function(event) {
-            // Her kan du tjekke input eller vise fejlmeddelelser
-            // notification.innerText = "Bruger eksisterer allerede!";
-            // notification.classList.add("show");
-            // setTimeout(() => notification.classList.remove("show"), 3000);
-        });
+// Hvis der er en fejl (den vises)
+if (notification.classList.contains("show")) {
+    setTimeout(() => {
+        notification.classList.remove("show");
+    }, 3000); // 3 sekunder
+}
+
     </script>
 </body>
 </html>
