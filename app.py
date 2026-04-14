@@ -195,6 +195,11 @@ def home():
     conn.close()
     return render_template('home.html', lists=lists)
 
+@app.route('/update_server', methods=["GET", "POST"])
+def update():
+    os.system('cd /home/shekib/mysite && git pull')
+    os.system("touch /var/www/shekib_pythonanywhere_com_wsgi.py")
+    return 'Updated and reloaded'
 
 @app.route('/todo/<list_name>')
 def show_list(list_name):
