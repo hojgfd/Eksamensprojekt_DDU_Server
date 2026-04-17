@@ -3,13 +3,20 @@ import sqlite3
 import os
 from datetime import datetime, timedelta
 from auth import auth # fra https://github.com/hojgfd/Eksamensprojekt-Informatik/blob/main/server/flask_app.py
+from routes.auth_api import auth_api
+from routes.todo_api import todo_api
+from tokens import token_required
 
 app = Flask(__name__, template_folder=os.path.join(os.path.dirname(__file__), 'templates'))
-app.secret_key = "minmegethemmeligenøgle" # fra https://github.com/hojgfd/Eksamensprojekt-Informatik/blob/main/server/flask_app.py
+app.secret_key = "JWT_SECRET" # fra https://github.com/hojgfd/Eksamensprojekt-Informatik/blob/main/server/flask_app.py
 app.register_blueprint(auth) # fra https://github.com/hojgfd/Eksamensprojekt-Informatik/blob/main/server/flask_app.py
+app.register_blueprint(auth_api)
+app.register_blueprint(todo_api)
+
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB = os.path.join(BASE_DIR, "data.db")
+
 
 def get_db(): #funktion fra https://github.com/hojgfd/Eksamensprojekt-Informatik/blob/main/server/database.py
     conn = sqlite3.connect(DB)
@@ -18,6 +25,7 @@ def get_db(): #funktion fra https://github.com/hojgfd/Eksamensprojekt-Informatik
 
 # INIT DATABASE
 def init_db():
+    print(app.url_map)
     conn = sqlite3.connect(DB)
     cursor = conn.cursor()
 
@@ -176,6 +184,7 @@ def landing():
         return redirect("/login")
     else:
         return render_template('landing.html')
+
 
 
 @app.route('/todo')
@@ -367,9 +376,13 @@ def api_heartrate():
         {"hr": hr, "time": ts} for hr, ts in data
     ])
 
+# GAMMEL TO-DO LIST API: SLET SENERE
+'''
 # Hent alle todo-lister
 @app.route('/api/todolists', methods=['GET'])
+@token_required
 def api_get_todolists():
+
     conn = sqlite3.connect(DB)
     cursor = conn.cursor()
     cursor.execute("SELECT id, name FROM todolists")
@@ -377,18 +390,23 @@ def api_get_todolists():
     conn.close()
     return jsonify(lists)
 
+
+
+
 # Opret en ny todo-liste
 @app.route('/api/todolists', methods=['POST'])
+@token_required
 def api_create_todolist():
     data = request.json
     name = data.get("name")
+    user_id = data.get("user_id")
     if not name:
         return jsonify({"error": "name is required"}), 400
 
     conn = sqlite3.connect(DB)
     cursor = conn.cursor()
     try:
-        cursor.execute("INSERT INTO todolists (name) VALUES (?)", (name,))
+        cursor.execute("INSERT INTO todolists (name, user_id) VALUES (?, ?)", (name, user_id))
         conn.commit()
         todolist_id = cursor.lastrowid
     except sqlite3.IntegrityError:
@@ -474,6 +492,8 @@ def api_delete_task(task_id):
     conn.commit()
     conn.close()
     return jsonify({"status": "deleted"})
+    
+'''
 
 @app.route('/api/heartrate', methods=['POST'])
 def add_heartrate():
@@ -527,4 +547,4 @@ def delete_list():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
