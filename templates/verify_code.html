@@ -55,9 +55,15 @@
     <h2>Indtast kode</h2>
 
     <form method="POST">
-        <input type="email" name="email" placeholder="Email" required>
         <input type="text" name="code" placeholder="6-cifret kode" required>
         <button>Bekræft</button>
+    </form>
+
+    <form method="POST" action="/resend-code">
+        <input type="hidden" name="email" value="{{ request.form.email }}">
+        <button type="submit" style="background:#1976d2;">
+        Send kode igen
+        </button>
     </form>
 
     {% if error %}

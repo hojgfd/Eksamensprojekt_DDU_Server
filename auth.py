@@ -159,3 +159,26 @@ Koden udløber om 10 minutter.
     server.sendmail(sender_email, to_email, msg.as_string())
 
     server.quit()
+
+@auth.route("/resend-code", methods=["POST"])
+def resend_code():
+    email = request.form["email"]
+
+    user = get_user_by_email(email)
+    if not user:
+        return render_template("verify_code.html", error="Email findes ikke")
+
+    code = ''.join(random.choices(string.digits, k=6))
+    expires = datetime.now() + timedelta(minutes=10)
+
+    db = get_db()
+    db.execute(
+        "INSERT INTO password_resets (user_id, code, expires_at) VALUES (?, ?, ?)",
+        (user["id"], code, expires.strftime("%Y-%m-%d %H:%M:%S"))
+    )
+    db.commit()
+    db.close()
+
+    send_email(email, code)
+
+    return render_template("verify_code.html", error="Ny kode sendt")
