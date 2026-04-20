@@ -42,17 +42,12 @@ def login():
         user = get_user(username)
 
         if user and check_password_hash(user["password"], password):
-            token = create_token(user["id"])
+            token = create_token(user["id"]) #burde kigge på
             session["user"] = {
                 "id": user["id"],
                 "username": user["username"],
                 "token": token
             }
-
-
-
-
-
             session["token"] = token
             return redirect("/")
 
@@ -68,6 +63,8 @@ def logout():
 def forgot_password():
     if request.method == "POST":
         email = request.form["email"]
+        session["reset_email"] = email
+        session["resend_available_at"] = (datetime.now() + timedelta(seconds=20)).timestamp()
 
         user = get_user_by_email(email)
         if not user:
@@ -94,8 +91,12 @@ def forgot_password():
 @auth.route("/verify-code", methods=["GET", "POST"])
 def verify_code():
     if request.method == "POST":
-        email = request.form["email"]
-        code = request.form["code"]
+
+        email = session.get("reset_email")
+        code = request.form.get("code")
+
+        if not code:
+            return render_template("verify_code.html", error="Udfyld felt")
 
         user = get_user_by_email(email)
         if not user:
@@ -162,11 +163,19 @@ Koden udløber om 10 minutter.
 
 @auth.route("/resend-code", methods=["POST"])
 def resend_code():
-    email = request.form["email"]
+    email = session.get("reset_email")
 
     user = get_user_by_email(email)
     if not user:
         return render_template("verify_code.html", error="Email findes ikke")
+
+    # cooldown check
+    available_at = session.get("resend_available_at", 0)
+    now = datetime.now().timestamp()
+
+    if now < available_at:
+        return render_template("verify_code.html", error="Vent før du kan sende igen")
+
 
     code = ''.join(random.choices(string.digits, k=6))
     expires = datetime.now() + timedelta(minutes=10)
@@ -180,5 +189,8 @@ def resend_code():
     db.close()
 
     send_email(email, code)
+
+    # reset cooldown
+    session["resend_available_at"] = (datetime.now() + timedelta(seconds=20)).timestamp()
 
     return render_template("verify_code.html", error="Ny kode sendt")
