@@ -10,23 +10,44 @@ def get_db():
     conn.row_factory = sqlite3.Row
     return conn
 
-def create_user(username, password):
+def create_user(username, email, password):
     db = get_db()
 
     hashed_password = generate_password_hash(password)
 
     db.execute(
-        "INSERT INTO users (username, password) VALUES (?, ?)",
-        (username, hashed_password)
+        "INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
+        (username, email, hashed_password)
     )
     db.commit()
     db.close()
+
+def update_password(user_id, new_password):
+    db = get_db()
+    hashed = generate_password_hash(new_password)
+
+    db.execute(
+        "UPDATE users SET password=? WHERE id=?",
+        (hashed, user_id)
+    )
+    db.commit()
+    db.close()
+
 
 def get_user(username):
     db = get_db()
     user = db.execute(
         "SELECT * FROM users WHERE username = ?",
         (username,)
+    ).fetchone()
+    db.close()
+    return user
+
+def get_user_by_email(email):
+    db = get_db()
+    user = db.execute(
+        "SELECT * FROM users WHERE email = ?",
+        (email,)
     ).fetchone()
     db.close()
     return user

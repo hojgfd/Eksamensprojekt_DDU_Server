@@ -2,26 +2,33 @@ from flask import Flask, render_template, request, redirect, url_for, jsonify, s
 import sqlite3
 import os
 from datetime import datetime, timedelta
-from auth import auth # fra https://github.com/hojgfd/Eksamensprojekt-Informatik/blob/main/server/flask_app.py
+
+app = Flask(__name__, template_folder=os.path.join(os.path.dirname(__file__), 'templates'))
+app.secret_key = "JWT_SECRET"
+
+# -------------------------
+# DATABASE
+# -------------------------
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB = os.path.join(BASE_DIR, "data.db")
+
+def get_db():
+    conn = sqlite3.connect(DB)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+# -------------------------
+# IMPORT BLUEPRINTS (EFTER APP + get_db)
+# -------------------------
+from auth import auth
 from routes.auth_api import auth_api
 from routes.todo_api import todo_api
 from tokens import token_required
 
-app = Flask(__name__, template_folder=os.path.join(os.path.dirname(__file__), 'templates'))
-app.secret_key = "JWT_SECRET" # fra https://github.com/hojgfd/Eksamensprojekt-Informatik/blob/main/server/flask_app.py
-app.register_blueprint(auth) # fra https://github.com/hojgfd/Eksamensprojekt-Informatik/blob/main/server/flask_app.py
+app.register_blueprint(auth)
 app.register_blueprint(auth_api)
 app.register_blueprint(todo_api)
-
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB = os.path.join(BASE_DIR, "data.db")
-
-
-def get_db(): #funktion fra https://github.com/hojgfd/Eksamensprojekt-Informatik/blob/main/server/database.py
-    conn = sqlite3.connect(DB)
-    conn.row_factory = sqlite3.Row
-    return conn
 
 # INIT DATABASE
 def init_db():
@@ -40,6 +47,9 @@ def init_db():
                        KEY
                        AUTOINCREMENT,
                        username
+                       TEXT
+                       UNIQUE,
+                       email
                        TEXT
                        UNIQUE,
                        password
@@ -108,6 +118,30 @@ def init_db():
                    )
                    """)
 
+    cursor.execute("""
+                   CREATE TABLE IF NOT EXISTS password_resets
+                   (
+                       id
+                       INTEGER
+                       PRIMARY
+                       KEY
+                       AUTOINCREMENT,
+                       user_id
+                       INTEGER,
+                       code
+                       TEXT,
+                       expires_at
+                       TEXT,
+                       FOREIGN
+                       KEY
+                   (
+                       user_id
+                   ) REFERENCES users
+                   (
+                       id
+                   )
+                       )
+                   """)
 
 
     # Indsæt dummy data hvis tabellen er tom
