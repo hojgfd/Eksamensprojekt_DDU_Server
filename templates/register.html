@@ -33,13 +33,17 @@
             margin-bottom: 20px;
         }
 
-        input[type="text"], input[type="password"] {
+         /* FIX */
+        input[type="text"],
+        input[type="password"],
+        input[type="email"] {
             width: calc(100% - 20px);
             padding: 10px;
             margin: 10px 0;
             border-radius: 6px;
             border: 1px solid #ccc;
             font-size: 1em;
+            display: block;
         }
 
         button {
@@ -109,7 +113,6 @@
 {% else %}
     <div id="notification" class="notification"></div>
 {% endif %}
-
 
         <form method="POST" id="register-form">
             <input type="text" name="username" placeholder="Brugernavn" required>
