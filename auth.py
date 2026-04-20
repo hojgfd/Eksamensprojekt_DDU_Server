@@ -25,8 +25,9 @@ def register():
                 error="Brugernavnet findes allerede!"
             )
 
-        create_user(username, email, password)
-        return redirect("/login")
+        user_id = create_user(username, email, password)
+
+        return render_template("login.html", error="Tjek din email for at aktivere din konto")
 
     return render_template("register.html")
 
@@ -73,13 +74,10 @@ def forgot_password():
         db.commit()
         db.close()
 
-        # SEND MAIL (VIGTIGT)
+        # SEND MAIL
         send_email(email, code)
 
-        return render_template(
-            "forgot_password.html",
-            success="Kode er sendt til din email"
-        )
+        return redirect(url_for("auth.verify_code"))
 
     return render_template("forgot_password.html")
 
@@ -94,10 +92,13 @@ def verify_code():
             return render_template("verify_code.html", error="Fejl i email")
 
         db = get_db()
+
         reset = db.execute(
             "SELECT * FROM password_resets WHERE user_id=? AND code=?",
             (user["id"], code)
         ).fetchone()
+
+        db.close()
 
         if not reset:
             return render_template("verify_code.html", error="Forkert kode")
@@ -105,6 +106,8 @@ def verify_code():
         return redirect(url_for("auth.reset_password", user_id=user["id"]))
 
     return render_template("verify_code.html")
+
+
 
 @auth.route("/reset-password/<int:user_id>", methods=["GET", "POST"])
 def reset_password(user_id):
@@ -146,6 +149,3 @@ Koden udløber om 10 minutter.
     server.sendmail(sender_email, to_email, msg.as_string())
 
     server.quit()
-
-
-

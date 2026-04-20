@@ -57,6 +57,7 @@ def init_db():
                    )
                    """)
 
+
     #todo lists
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS todolists (
