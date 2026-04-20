@@ -26,6 +26,7 @@ from auth import auth
 from routes.auth_api import auth_api
 from routes.todo_api import todo_api
 from routes.heartrate_api import heartrate_api
+from routes.focusmode_api import focusmode_api
 from tokens import token_required
 
 
@@ -33,6 +34,7 @@ app.register_blueprint(auth)
 app.register_blueprint(auth_api)
 app.register_blueprint(todo_api)
 app.register_blueprint(heartrate_api)
+app.register_blueprint(focusmode_api)
 
 # INIT DATABASE
 def init_db():
@@ -88,48 +90,23 @@ def init_db():
     cursor.execute("""
                    CREATE TABLE IF NOT EXISTS focus_sessions
                    (
-                       id
-                       INTEGER
-                       PRIMARY
-                       KEY
-                       AUTOINCREMENT,
-                       session_date
-                       TEXT
-                       NOT
-                       NULL,
-                       minutes
-                       INTEGER
-                       NOT
-                       NULL,
-                       distractions
-                       INTEGER
-                       NOT
-                       NULL
-                       DEFAULT
-                       0,
-                       created_at
-                       TEXT
-                       NOT
-                       NULL
+                       id INTEGER PRIMARY KEY AUTOINCREMENT,
+                       session_date TEXT NOT NULL,
+                       minutes INTEGER NOT NULL,
+                       distractions INTEGER NOT NULL DEFAULT 0,
+                       created_at TEXT NOT NULL,
+                       user_id INTEGER
                    )
                    """)
 
     cursor.execute("""
                    CREATE TABLE IF NOT EXISTS password_resets
                    (
-                       id
-                       INTEGER
-                       PRIMARY
-                       KEY
-                       AUTOINCREMENT,
-                       user_id
-                       INTEGER,
-                       code
-                       TEXT,
-                       expires_at
-                       TEXT,
-                       FOREIGN
-                       KEY
+                       id INTEGER PRIMARY KEY AUTOINCREMENT,
+                       user_id INTEGER,
+                       code TEXT,
+                       expires_at TEXT,
+                       FOREIGN KEY
                    (
                        user_id
                    ) REFERENCES users
@@ -240,70 +217,9 @@ def show_list(list_name):
 def focus():
     if "user" not in session:
         return redirect("/login")
-    return render_template('focus.html')
 
-@app.route('/api/focus-session', methods=['POST'])
-def api_add_focus_session():
-    data = request.get_json(silent=True) or {}
-
-    minutes = data.get("minutes")
-    distractions = data.get("distractions", 0)
-    session_date = data.get("date", datetime.now().strftime("%Y-%m-%d"))
-
-    try:
-        minutes = int(minutes)
-        distractions = int(distractions)
-    except (TypeError, ValueError):
-        return jsonify({"error": "minutes og distractions skal være tal"}), 400
-
-    if minutes < 0 or distractions < 0:
-        return jsonify({"error": "værdier må ikke være negative"}), 400
-
-    conn = sqlite3.connect(DB)
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        INSERT INTO focus_sessions (session_date, minutes, distractions, created_at)
-        VALUES (?, ?, ?, ?)
-    """, (
-        session_date,
-        minutes,
-        distractions,
-        datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    ))
-
-    conn.commit()
-    conn.close()
-
-    return jsonify({"status": "ok"}), 201
-
-
-@app.route('/api/focus-data', methods=['GET'])
-def api_focus_data():
-    conn = sqlite3.connect(DB)
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        SELECT 
-            session_date AS date,
-            SUM(minutes) AS total_minutes,
-            SUM(distractions) AS total_distractions
-        FROM focus_sessions
-        GROUP BY session_date
-        ORDER BY session_date
-    """)
-
-    rows = cursor.fetchall()
-    conn.close()
-
-    return jsonify([
-        {
-            "date": row[0],
-            "minutes": row[1],
-            "distractions": row[2]
-        }
-        for row in rows
-    ])
+    token = session["user"]["token"]
+    return render_template('focus.html', token=token)
 
 
 # Tilføj todo
