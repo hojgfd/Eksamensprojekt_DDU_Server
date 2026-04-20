@@ -176,6 +176,9 @@
     </div>
 
     <script>
+        const token = "{{ token or '' }}";
+        console.log("TOKEN:", token);
+
         let focusChart = null;
 
         function formatDate(dateString) {
@@ -190,7 +193,18 @@
         }
 
         async function loadFocusData() {
-            const response = await fetch('/api/focus-data');
+            const response = await fetch('/api/focus-data', {
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        });
+
+            if (response.status === 401) {
+            alert("Session expired. Log ind igen.");
+            window.location.href = "/login";
+            return;
+        }
+
             const data = await response.json();
 
             const tbody = document.getElementById('focusTableBody');

@@ -106,13 +106,29 @@
 </table>
 
 <script>
+const token = "{{ token }}";
+
 let chart;
 
 async function loadData() {
     const hours = document.getElementById("timeFilter").value;
     const view = document.getElementById("viewMode").value;
 
-    const res = await fetch(`/api/heartrate?hours=${hours}`);
+    const res = await fetch(`/api/heartrate?hours=${hours}`, {
+    headers: {
+        "Authorization": `Bearer ${token}`
+    }
+});
+
+    if (!res.ok) {
+    console.log(await res.text());
+}
+
+    if (res.status === 401) {
+    alert("Session expired");
+    window.location.href = "/login";
+}
+
     const data = await res.json();
 
     const labels = data.map(d => new Date(d.time).toLocaleTimeString());
