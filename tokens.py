@@ -2,8 +2,9 @@ import jwt
 from functools import wraps
 from flask import request, jsonify, g
 from datetime import datetime, timedelta
+import os
 
-JWT_SECRET = ("JWT_SECRET")
+JWT_SECRET = "my-super-secret-key"
 JWT_ALGO = "HS256"
 
 # Create token

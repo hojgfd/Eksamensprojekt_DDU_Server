@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, session
 
 from tokens import *
 from database import get_db
@@ -6,15 +6,11 @@ from werkzeug.security import check_password_hash
 
 auth_api = Blueprint("auth_api", __name__)
 
+
 @auth_api.route('/api/login', methods=['POST'])
 def api_login():
-    print("ROUTE HIT")
-
     conn = get_db()
-    print("GOT DB")
-
     data = request.json
-    print("DATA:", data)
 
 
     username = data.get("username")
@@ -24,8 +20,6 @@ def api_login():
     cursor = conn.cursor()
     cursor.execute("SELECT id, password FROM users WHERE username=?", (username,))
     row = cursor.fetchone()
-
-    print("ROW:", row)
 
     conn.close()
 
@@ -38,5 +32,7 @@ def api_login():
         return jsonify({"error": "Invalid"}), 401
 
     token = create_token(row[0])
+
+    session["token"] = token
 
     return jsonify({"token": token})

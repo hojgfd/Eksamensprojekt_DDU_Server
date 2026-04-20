@@ -3,6 +3,7 @@ import sqlite3
 import os
 from datetime import datetime, timedelta
 
+
 app = Flask(__name__, template_folder=os.path.join(os.path.dirname(__file__), 'templates'))
 app.secret_key = "JWT_SECRET"
 
@@ -24,11 +25,14 @@ def get_db():
 from auth import auth
 from routes.auth_api import auth_api
 from routes.todo_api import todo_api
+from routes.heartrate_api import heartrate_api
 from tokens import token_required
+
 
 app.register_blueprint(auth)
 app.register_blueprint(auth_api)
 app.register_blueprint(todo_api)
+app.register_blueprint(heartrate_api)
 
 # INIT DATABASE
 def init_db():
@@ -41,19 +45,10 @@ def init_db():
     cursor.execute("""
                    CREATE TABLE IF NOT EXISTS users
                    (
-                       id
-                       INTEGER
-                       PRIMARY
-                       KEY
-                       AUTOINCREMENT,
-                       username
-                       TEXT
-                       UNIQUE,
-                       email
-                       TEXT
-                       UNIQUE,
-                       password
-                       TEXT
+                       id INTEGER PRIMARY KEY AUTOINCREMENT,
+                       username TEXT UNIQUE,
+                       email TEXT UNIQUE,
+                       password TEXT
                    )
                    """)
 
@@ -84,6 +79,7 @@ def init_db():
         CREATE TABLE IF NOT EXISTS heartrate (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             hr INTEGER,
+            user_id INTEGER,
             timestamp TEXT
         )
     """)
@@ -143,17 +139,6 @@ def init_db():
                        )
                    """)
 
-
-    # Indsæt dummy data hvis tabellen er tom
-    #cursor.execute("SELECT COUNT(*) FROM heartrate")
-    #if cursor.fetchone()[0] == 0:
-     #   dummy_data = [
-      #      (72, datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
-       #     (85, datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
-        #    (90, datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
-         #   (65, datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
-        #]
-        #cursor.executemany("INSERT INTO heartrate (hr, timestamp) VALUES (?, ?)", dummy_data)
 
 
     conn.commit()
@@ -385,171 +370,10 @@ def rename_list():
 
 @app.route('/heartratedata')
 def heartratedata():
-    return render_template("heartrate.html")
+    user = session.get("user")
+    token = user["token"] if user else None
+    return render_template("heartrate.html", token=token)
 
-@app.route('/api/heartrate')
-def api_heartrate():
-    hours = int(request.args.get("hours", 24))
-
-    conn = sqlite3.connect(DB)
-    cursor = conn.cursor()
-
-    time_limit = datetime.now() - timedelta(hours=hours)
-
-    cursor.execute("""
-        SELECT hr, timestamp
-        FROM heartrate
-        WHERE timestamp >= ?
-        ORDER BY timestamp
-    """, (time_limit.strftime("%Y-%m-%d %H:%M:%S"),))
-
-    data = cursor.fetchall()
-    conn.close()
-
-    return jsonify([
-        {"hr": hr, "time": ts} for hr, ts in data
-    ])
-
-# GAMMEL TO-DO LIST API: SLET SENERE
-'''
-# Hent alle todo-lister
-@app.route('/api/todolists', methods=['GET'])
-@token_required
-def api_get_todolists():
-
-    conn = sqlite3.connect(DB)
-    cursor = conn.cursor()
-    cursor.execute("SELECT id, name FROM todolists")
-    lists = [{"id": lid, "name": name} for lid, name in cursor.fetchall()]
-    conn.close()
-    return jsonify(lists)
-
-
-
-
-# Opret en ny todo-liste
-@app.route('/api/todolists', methods=['POST'])
-@token_required
-def api_create_todolist():
-    data = request.json
-    name = data.get("name")
-    user_id = data.get("user_id")
-    if not name:
-        return jsonify({"error": "name is required"}), 400
-
-    conn = sqlite3.connect(DB)
-    cursor = conn.cursor()
-    try:
-        cursor.execute("INSERT INTO todolists (name, user_id) VALUES (?, ?)", (name, user_id))
-        conn.commit()
-        todolist_id = cursor.lastrowid
-    except sqlite3.IntegrityError:
-        conn.close()
-        return jsonify({"error": "Todo list already exists"}), 409
-    conn.close()
-
-    return jsonify({"id": todolist_id, "name": name}), 201
-
-# Slet en todo-liste
-@app.route('/api/todolists/<int:list_id>', methods=['DELETE'])
-def api_delete_todolist(list_id):
-    conn = sqlite3.connect(DB)
-    cursor = conn.cursor()
-    # Slet tasks først (foreign key)
-    cursor.execute("DELETE FROM tasks WHERE todolist_id=?", (list_id,))
-    # Slet selve listen
-    cursor.execute("DELETE FROM todolists WHERE id=?", (list_id,))
-    conn.commit()
-    conn.close()
-    return jsonify({"status": "deleted"})
-
-# Hent tasks for en liste
-@app.route('/api/todolists/<int:list_id>/tasks', methods=['GET'])
-def api_get_tasks(list_id):
-    conn = sqlite3.connect(DB)
-    cursor = conn.cursor()
-    cursor.execute("SELECT id, text, completed FROM tasks WHERE todolist_id=?", (list_id,))
-    tasks = [{"id": tid, "text": text, "completed": bool(completed)}
-             for tid, text, completed in cursor.fetchall()]
-    conn.close()
-    return jsonify(tasks)
-
-# Tilføj task til en liste
-@app.route('/api/todolists/<int:list_id>/tasks', methods=['POST'])
-def api_add_task(list_id):
-    data = request.json
-    text = data.get("text")
-    if not text:
-        return jsonify({"error": "text is required"}), 400
-
-    conn = sqlite3.connect(DB)
-    cursor = conn.cursor()
-    cursor.execute(
-        "INSERT INTO tasks (todolist_id, text, completed) VALUES (?, ?, ?)",
-        (list_id, text, 0)
-    )
-    conn.commit()
-    task_id = cursor.lastrowid
-    conn.close()
-
-    return jsonify({"id": task_id, "text": text, "completed": False, "todolist_id": list_id}), 201
-
-# Opdater en task (fx markér som completed)
-@app.route('/api/tasks/<int:task_id>', methods=['PATCH'])
-def api_update_task(task_id):
-    data = request.json
-    conn = sqlite3.connect(DB)
-    cursor = conn.cursor()
-
-    if "completed" in data:
-        cursor.execute("UPDATE tasks SET completed=? WHERE id=?", (int(data["completed"]), task_id))
-    if "text" in data:
-        cursor.execute("UPDATE tasks SET text=? WHERE id=?", (data["text"], task_id))
-
-    conn.commit()
-    cursor.execute("SELECT id, todolist_id, text, completed FROM tasks WHERE id=?", (task_id,))
-    row = cursor.fetchone()
-    conn.close()
-
-    if row:
-        tid, todolist_id, text, completed = row
-        return jsonify({"id": tid, "todolist_id": todolist_id, "text": text, "completed": bool(completed)})
-    else:
-        return jsonify({"error": "Task not found"}), 404
-
-# Slet en task
-@app.route('/api/tasks/<int:task_id>', methods=['DELETE'])
-def api_delete_task(task_id):
-    conn = sqlite3.connect(DB)
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM tasks WHERE id=?", (task_id,))
-    conn.commit()
-    conn.close()
-    return jsonify({"status": "deleted"})
-    
-'''
-
-@app.route('/api/heartrate', methods=['POST'])
-def add_heartrate():
-    data = request.json
-
-    hr = data.get("hr")
-
-    if not hr:
-        return jsonify({"error": "Missing HR"}), 400
-
-    conn = sqlite3.connect(DB)
-    cursor = conn.cursor()
-
-    cursor.execute(
-        "INSERT INTO heartrate (hr, timestamp) VALUES (?, ?)",
-        (hr, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    )
-
-    conn.commit()
-    conn.close()
-
-    return jsonify({"status": "ok"})
 
 
 # Slet liste

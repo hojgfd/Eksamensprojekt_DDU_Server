@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from models import get_db
 import smtplib
 from email.mime.text import MIMEText
+from tokens import *
 
 
 auth = Blueprint("auth", __name__)
@@ -40,11 +41,20 @@ def login():
         user = get_user(username)
 
         if user and check_password_hash(user["password"], password):
+            token = create_token(user["id"])
             session["user"] = {
                 "id": user["id"],
-                "username": user["username"]
+                "username": user["username"],
+                "token": token
             }
+
+
+
+
+
+            session["token"] = token
             return redirect("/")
+
 
     return render_template("login.html")
 
