@@ -20,16 +20,10 @@ def register():
         email = request.form["email"].strip()
         password = request.form["password"].strip()
 
-        if get_user(username):
+        if get_user(username) or get_user_by_email(email):
             return render_template(
                 "register.html",
-                error="Brugernavnet findes allerede!"
-            )
-
-        if get_user_by_email(email):
-            return render_template(
-                "register.html",
-                error="Email findes allerede!"
+                error="Brugernavn/email findes allerede"
             )
 
         user_id = create_user(username, email, password)
