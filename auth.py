@@ -26,6 +26,12 @@ def register():
                 error="Brugernavnet findes allerede!"
             )
 
+        if get_user_by_email(email):
+            return render_template(
+                "register.html",
+                error="Email findes allerede!"
+            )
+
         user_id = create_user(username, email, password)
 
         return render_template("login.html", error="Tjek din email for at aktivere din konto")
