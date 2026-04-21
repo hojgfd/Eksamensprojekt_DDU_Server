@@ -114,14 +114,20 @@ def verify_code():
         if not reset:
             return render_template("verify_code.html", error="Forkert kode")
 
-        return redirect(url_for("auth.reset_password", user_id=user["id"]))
+        session["reset_user_id"] = user["id"]
+        return redirect(url_for("auth.reset_password"))
 
     return render_template("verify_code.html")
 
 
 
-@auth.route("/reset-password/<int:user_id>", methods=["GET", "POST"])
-def reset_password(user_id):
+@auth.route("/reset-password/", methods=["GET", "POST"])
+def reset_password():
+    user_id = session.get("reset_user_id")
+
+    if not user_id:
+        return redirect("\login")
+
     if request.method == "POST":
         password = request.form["password"]
         confirm = request.form["confirm"]
@@ -130,6 +136,8 @@ def reset_password(user_id):
             return render_template("reset_password.html", error="Passwords matcher ikke")
 
         update_password(user_id, password)
+
+        session.pop("reset_user_id",None)
 
         return redirect("/login")
 
