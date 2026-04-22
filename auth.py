@@ -16,9 +16,12 @@ auth = Blueprint("auth", __name__)
 @auth.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
-        username = request.form["username"].strip()
-        email = request.form["email"].strip()
-        password = request.form["password"].strip()
+        username = request.form.get("username","").strip()
+        email = request.form.get("email","").strip()
+        password = request.form.get("password","").strip()
+
+        if not username or not email or not password:
+            return render_template("register.html", error="Udfyld alle felter")
 
         if get_user(username) or get_user_by_email(email):
             return render_template(
@@ -36,8 +39,11 @@ def register():
 @auth.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
+        username = request.form.get("username","").strip()
+        password = request.form.get("password","").strip()
+
+        if not username or not password:
+            return render_template("login.html", error="Udfyld alle felter")
 
         user = get_user(username)
 
@@ -62,7 +68,7 @@ def logout():
 @auth.route("/forgot-password", methods=["GET", "POST"])
 def forgot_password():
     if request.method == "POST":
-        email = request.form["email"]
+        email = request.form.get("email","").strip()
         session["reset_email"] = email
         session["resend_available_at"] = (datetime.now() + timedelta(seconds=20)).timestamp()
 
@@ -93,7 +99,7 @@ def verify_code():
     if request.method == "POST":
 
         email = session.get("reset_email")
-        code = request.form.get("code")
+        code = request.form.get("code","").strip()
 
         if not code:
             return render_template("verify_code.html", error="Udfyld felt")
@@ -126,11 +132,11 @@ def reset_password():
     user_id = session.get("reset_user_id")
 
     if not user_id:
-        return redirect("\login")
+        return redirect("/login")
 
     if request.method == "POST":
-        password = request.form["password"]
-        confirm = request.form["confirm"]
+        password = request.form.get("password","").strip()
+        confirm = request.form.get("confirm","").strip()
 
         if password != confirm:
             return render_template("reset_password.html", error="Passwords matcher ikke")

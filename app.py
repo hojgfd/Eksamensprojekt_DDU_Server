@@ -232,7 +232,6 @@ def delete_account():
     conn = sqlite3.connect(DB)
     cursor = conn.cursor()
 
-    # Slet brugerens data først (vigtigt)
     cursor.execute("DELETE FROM tasks WHERE todolist_id IN (SELECT id FROM todolists WHERE user_id=?)", (user_id,))
     cursor.execute("DELETE FROM todolists WHERE user_id=?", (user_id,))
     cursor.execute("DELETE FROM heartrate WHERE user_id=?", (user_id,))
@@ -342,6 +341,24 @@ def delete_list():
     conn.close()
 
     return jsonify({"status": "deleted"})
+
+@app.before_request
+def clear_broken_session():
+    if "user" in session:
+        try:
+            _ = session["user"]["id"]
+        except Exception:
+            session.clear()
+
+@app.after_request
+def set_session_cookie(response):
+    session.modified = True
+    return response
+
+@app.errorhandler(400)
+def bad_request(e):
+    print("BAD REQUEST:", request.form, request.data)
+    return redirect("/login")
 
 
 if __name__ == '__main__':
