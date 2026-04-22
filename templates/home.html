@@ -81,30 +81,110 @@
             pointer-events: auto;
 
         }
-        .logout-btn {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    background-color: #e53935;
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background 0.3s;
-}
 
-.logout-btn:hover {
-    background-color: #b71c1c;
-}
+        #profileBtn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            border-radius: 50px;
+            border: none;
+            background: #1976d2;
+            color: white;
+            cursor: pointer;
+        }
+
+    /* popup */
+        #profileModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background: white;
+            width: 350px;
+            margin: 100px auto;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        /* knapper */
+        .logout-btn {
+            background: red;
+            color: white;
+            padding: 12px;
+            border: none;
+            width: 100%;
+            margin-top: 10px;
+            border-radius: 6px;
+        }
+
+        .delete-btn {
+            background: darkred;
+            color: white;
+            padding: 12px;
+            border: none;
+            width: 100%;
+            margin-top: 10px;
+            border-radius: 6px;
+        }
 
     </style>
 </head>
 <body>
+<div id="profileModal">
+    <div class="modal-content">
+        <h2>Profil</h2>
+
+        <form action="/logout" method="get">
+            <button class="logout-btn">Log ud</button>
+        </form>
+
+        <button class="delete-btn" id="deleteAccountBtn">DELETE ACCOUNT</button>
+
+        <br>
+        <button onclick="closeProfile()">Luk</button>
+    </div>
+</div>
+
+<div id="confirmDeleteModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5);">
+    <div style="background:white; width:300px; margin:150px auto; padding:20px; border-radius:10px; text-align:center;">
+        <h3>Er du sikker?</h3>
+        <p>Dette kan ikke fortrydes</p>
+
+        <form action="/delete-account" method="post">
+            <button style="background:darkred; color:white; padding:10px; border:none; width:100%; border-radius:6px;">
+                JA, SLET
+            </button>
+        </form>
+
+        <br>
+        <button onclick="closeConfirm()" style="padding:8px;">Annuller</button>
+    </div>
+</div>
+
+
+<script>
+function openProfile() {
+    document.getElementById("profileModal").style.display = "block";
+}
+
+function closeProfile() {
+    document.getElementById("profileModal").style.display = "none";
+}
+</script>
+
+    <button onclick="openProfile()" id="profileBtn">Profil</button>
+
+
     <div class="container">
         <h1>Vælg din TODO-liste</h1>
-    <button class="logout-btn" onclick="window.location.href='/logout'">Log ud</button>
-
 
         <!-- Tilbage til forsiden -->
         <div style="text-align: center; margin-bottom: 20px;">
@@ -229,6 +309,49 @@
                 showNotification(`Listen "${listName}" er blevet slettet!`);
             });
         });
+
+
+let deleteStep = 0;
+let deleteTimer = null;
+let timeLeft = 20;
+
+const deleteAccountBtn = document.getElementById("deleteAccountBtn");
+
+deleteAccountBtn.addEventListener("click", function() {
+
+    // STEP 1 → start countdown
+    if (deleteStep === 0) {
+        deleteStep = 1;
+        timeLeft = 20;
+
+        deleteAccountBtn.disabled = true;
+
+        deleteTimer = setInterval(() => {
+            deleteAccountBtn.innerText = `Vent ${timeLeft} sek...`;
+            timeLeft--;
+
+            if (timeLeft < 0) {
+                clearInterval(deleteTimer);
+                deleteAccountBtn.disabled = false;
+                deleteAccountBtn.innerText = "Klik igen for at slette";
+                deleteAccountBtn.style.backgroundColor = "red";
+                deleteStep = 2;
+            }
+        }, 1000);
+
+        return;
+    }
+
+    // STEP 2 → vis popup
+    if (deleteStep === 2) {
+        document.getElementById("confirmDeleteModal").style.display = "block";
+    }
+});
+
+
+function closeConfirm() {
+    document.getElementById("confirmDeleteModal").style.display = "none";
+}
     </script>
 </body>
 </html>

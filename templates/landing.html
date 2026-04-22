@@ -4,9 +4,105 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Forside</title>
+
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+  <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f7f6;
+        }
+
+        .landing-wrapper {
+            text-align: center;
+            margin-top: 100px;
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 30px;
+        }
+
+        .main-button {
+            background: #43a047;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+        }
+
+        .main-button:hover {
+            background: #2e7d32;
+        }
+#profileBtn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            border-radius: 50px;
+            border: none;
+            background: #1976d2;
+            color: white;
+            cursor: pointer;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+        }
+
+        .modal-box {
+            background: white;
+            width: 350px;
+            margin: 120px auto;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .logout-btn {
+            background: red;
+            color: white;
+            padding: 12px;
+            border: none;
+            width: 100%;
+            margin-top: 10px;
+            border-radius: 6px;
+        }
+
+        .delete-btn {
+            background: darkred;
+            color: white;
+            padding: 12px;
+            border: none;
+            width: 100%;
+            margin-top: 10px;
+            border-radius: 6px;
+        }
+
+        .danger-btn {
+            background: darkred;
+            color: white;
+            padding: 12px;
+            border: none;
+            width: 100%;
+            margin-top: 10px;
+            border-radius: 6px;
+        }
+    </style>
+</head>
 <body class="landing-page">
+<button onclick="openProfile()" id="profileBtn">Profil</button>
     <div class="landing-wrapper">
         <h1>Forside</h1>
 
@@ -16,23 +112,53 @@
             <a href="{{ url_for('heartratedata') }}" class="main-button">heart rate data</a>
         </div>
     </div>
-    <body>
-    <div style="position: fixed; top: 10px; right: 20px; z-index: 1000;">
-        <button onclick="window.location.href='/logout'"
-                style="
-                    background-color: #e53935;
-                    color: white;
-                    border: none;
-                    padding: 10px 20px;
-                    font-size: 1em;
-                    border-radius: 6px;
-                    cursor: pointer;
-                    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-                    transition: background 0.3s;
-                "
-                onmouseover="this.style.backgroundColor='#b71c1c'"
-                onmouseout="this.style.backgroundColor='#e53935'">
-            Log ud
-        </button>
+
+    <div id="profileModal" class="modal">
+        <div class="modal-box">
+            <h2>Profil</h2>
+
+            <form action="/logout" method="get">
+                <button class="logout-btn">Log ud</button>
+            </form>
+
+            <button class="delete-btn" id="deleteAccountBtn">DELETE ACCOUNT</button>
+
+            <br>
+            <button onclick="closeProfile()">Luk</button>
+        </div>
     </div>
+
+    <div id="confirmDeleteModal" class="modal">
+        <div class="modal-box">
+            <h3>Er du sikker?</h3>
+            <p>Dette kan ikke fortrydes</p>
+
+            <form action="/delete-account" method="post">
+                <button class="danger-btn">JA, SLET</button>
+            </form>
+
+            <br>
+            <button onclick="closeConfirm()">Annuller</button>
+        </div>
+    </div>
+
+<script>
+function openProfile() {
+    document.getElementById("profileModal").style.display = "block";
+}
+
+function closeProfile() {
+    document.getElementById("profileModal").style.display = "none";
+}
+
+function closeConfirm() {
+    document.getElementById("confirmDeleteModal").style.display = "none";
+}
+
+document.getElementById("deleteAccountBtn").addEventListener("click", function () {
+    document.getElementById("confirmDeleteModal").style.display = "block";
+});
+</script>
+
+</body>
 </html>

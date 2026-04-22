@@ -222,6 +222,29 @@ def focus():
     token = session["user"]["token"]
     return render_template('focus.html', token=token)
 
+@app.route('/delete-account', methods=['POST'])
+def delete_account():
+    if "user" not in session:
+        return redirect("/login")
+
+    user_id = session["user"]["id"]
+
+    conn = sqlite3.connect(DB)
+    cursor = conn.cursor()
+
+    # Slet brugerens data først (vigtigt)
+    cursor.execute("DELETE FROM tasks WHERE todolist_id IN (SELECT id FROM todolists WHERE user_id=?)", (user_id,))
+    cursor.execute("DELETE FROM todolists WHERE user_id=?", (user_id,))
+    cursor.execute("DELETE FROM heartrate WHERE user_id=?", (user_id,))
+    cursor.execute("DELETE FROM focus_sessions WHERE user_id=?", (user_id,))
+    cursor.execute("DELETE FROM users WHERE id=?", (user_id,))
+
+    conn.commit()
+    conn.close()
+
+    session.clear()
+
+    return redirect("/login")
 
 # Tilføj todo
 @app.route('/add-todo', methods=['POST'])

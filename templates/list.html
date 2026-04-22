@@ -109,57 +109,130 @@
             text-align: center;
             color: gray;
         }
+    #profileBtn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #1976d2;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 50px;
+            cursor: pointer;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+        }
+
+        .modal-box {
+            background: white;
+            width: 350px;
+            margin: 120px auto;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
         .logout-btn {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    background-color: #e53935;
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background 0.3s;
-}
+            background: red;
+            color: white;
+            padding: 12px;
+            border: none;
+            width: 100%;
+            margin-top: 10px;
+            border-radius: 6px;
+        }
 
-.logout-btn:hover {
-    background-color: #b71c1c;
-}
+        .delete-btn {
+            background: darkred;
+            color: white;
+            padding: 12px;
+            border: none;
+            width: 100%;
+            margin-top: 10px;
+            border-radius: 6px;
+        }
 
+        .danger-btn {
+            background: darkred;
+            color: white;
+            padding: 12px;
+            border: none;
+            width: 100%;
+            margin-top: 10px;
+            border-radius: 6px;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-    <button class="logout-btn" onclick="window.location.href='/logout'">Log ud</button>
 
-        <div class="list-header">
-            <h1>
-                <input id="list-name-input" type="text" value="{{ list_name }}">
-                <button onclick="updateListName()">Gem</button>
-            </h1>
-        </div>
+<button onclick="openProfile()" id="profileBtn">Profil</button>
 
-        <!-- Tilføj todo -->
-        <form class="todo-form" action="/add-todo" method="post">
-            <input type="text" name="text" placeholder="Skriv en opgave..." required>
-            <input type="hidden" name="list_name" value="{{ list_name }}">
-            <button type="submit">Tilføj</button>
+<div id="profileModal" class="modal">
+    <div class="modal-box">
+        <h2>Profil</h2>
+
+        <form action="/logout" method="get">
+            <button class="logout-btn">Log ud</button>
         </form>
 
-        <!-- TODO LIST -->
-        {% for todo in todos %}
-        <div class="todo-card {% if todo.completed %}completed{% endif %}">
-            <div class="todo-text">{{ todo.text }}</div>
-            <div class="actions">
-                <button onclick="toggleComplete({{ todo.id }})">
-                    {% if todo.completed %}✔{% else %}❏{% endif %}
-                </button>
-                <button onclick="deleteTask({{ todo.id }}, this)">🗑️</button>
-            </div>
+        <button class="delete-btn" id="deleteAccountBtn">DELETE ACCOUNT</button>
+
+        <br>
+        <button onclick="closeProfile()">Luk</button>
+    </div>
+</div>
+
+<div id="confirmDeleteModal" class="modal">
+    <div class="modal-box">
+        <h3>Er du sikker?</h3>
+        <p>Dette kan ikke fortrydes</p>
+
+        <form action="/delete-account" method="post">
+            <button class="danger-btn">JA, SLET</button>
+        </form>
+
+        <br>
+        <button onclick="closeConfirm()">Annuller</button>
+    </div>
+</div>
+
+
+<div class="container">
+
+    <div class="list-header">
+        <h1>
+            <input id="list-name-input" type="text" value="{{ list_name }}">
+            <button onclick="updateListName()">Gem</button>
+        </h1>
+    </div>
+
+    <form class="todo-form" action="/add-todo" method="post">
+        <input type="text" name="text" placeholder="Skriv en opgave..." required>
+        <input type="hidden" name="list_name" value="{{ list_name }}">
+        <button type="submit">Tilføj</button>
+    </form>
+
+    {% for todo in todos %}
+    <div class="todo-card {% if todo.completed %}completed{% endif %}">
+        <div class="todo-text">{{ todo.text }}</div>
+        <div class="actions">
+            <button onclick="toggleComplete({{ todo.id }})">✔</button>
+            <button onclick="deleteTask({{ todo.id }}, this)">🗑️</button>
         </div>
-        {% else %}
-        <p class="empty">Ingen opgaver endnu</p>
-        {% endfor %}
+    </div>
+    {% else %}
+    <p class="empty">Ingen opgaver endnu</p>
+    {% endfor %}
+
+</div>
 
         <div style="text-align: center; margin-top: 20px;">
             <a href="{{ url_for('home') }}" style="
@@ -175,68 +248,60 @@
                 ← Tilbage til to-do oversigt
             </a>
         </div>
-
     </div>
 
-    <script>
-        function toggleComplete(taskId) {
-            fetch(`/toggle-todo/{{ list_name }}/${taskId}`, { method: 'POST' })
-            .then(res => {
-                if (res.ok) location.reload();
-                else alert("Kunne ikke opdatere");
-            });
-        }
+<script>
+function openProfile() {
+    document.getElementById("profileModal").style.display = "block";
+}
 
-        function deleteTask(taskId, btn) {
-            const card = btn.closest('.todo-card');
+function closeProfile() {
+    document.getElementById("profileModal").style.display = "none";
+}
 
-            if (btn.classList.contains("delete-confirm")) {
-                card.classList.add("removing");
-                setTimeout(() => {
-                    fetch(`/delete-todo/{{ list_name }}/${taskId}`, { method: 'POST' })
-                    .then(res => {
-                        if (res.ok) card.remove();
-                        else alert("Kunne ikke slette");
-                    });
-                }, 300);
-                return;
-            }
+function closeConfirm() {
+    document.getElementById("confirmDeleteModal").style.display = "none";
+}
 
-            btn.classList.add("delete-confirm");
-            btn.innerText = "Slet?";
-            setTimeout(() => {
-                btn.classList.remove("delete-confirm");
-                btn.innerText = "🗑️";
-            }, 3000);
-        }
+document.getElementById("deleteAccountBtn").addEventListener("click", function () {
+    document.getElementById("confirmDeleteModal").style.display = "block";
+});
+</script>
 
-        function updateListName() {
-            const input = document.getElementById('list-name-input');
-            const newName = input.value.trim();
-            const oldName = "{{ list_name }}";
+<script>
+function toggleComplete(taskId) {
+    fetch(`/toggle-todo/{{ list_name }}/${taskId}`, { method: 'POST' })
+    .then(res => location.reload());
+}
 
-            if (!newName) {
-                alert("Navn må ikke være tomt!");
-                return;
-            }
+function deleteTask(taskId, btn) {
+    const card = btn.closest('.todo-card');
 
-            const formData = new URLSearchParams();
-            formData.append("old_name", oldName);
-            formData.append("new_name", newName);
+    fetch(`/delete-todo/{{ list_name }}/${taskId}`, { method: 'POST' })
+    .then(res => {
+        if (res.ok) card.remove();
+    });
+}
 
-            fetch('/rename-list', {
-                method: 'POST',
-                body: formData
-            })
-            .then(res => {
-                if (res.ok) {
-                    // Redirect til den nye liste
-                    window.location.href = `/todo/${newName}`;
-                } else {
-                    alert("Kunne ikke gemme navnet");
-                }
-            });
-        }
-    </script>
+function updateListName() {
+    const input = document.getElementById('list-name-input');
+    const newName = input.value.trim();
+    const oldName = "{{ list_name }}";
+
+    if (!newName) return alert("Navn må ikke være tomt!");
+
+    const formData = new URLSearchParams();
+    formData.append("old_name", oldName);
+    formData.append("new_name", newName);
+
+    fetch('/rename-list', {
+        method: 'POST',
+        body: formData
+    }).then(res => {
+        if (res.ok) window.location.href = `/todo/${newName}`;
+    });
+}
+</script>
+
 </body>
 </html>
