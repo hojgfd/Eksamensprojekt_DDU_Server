@@ -207,7 +207,7 @@ def resend_code():
 
     send_email(email, code)
 
-    # reset cooldown
+    # reset cooldown ()
     session["resend_available_at"] = (datetime.now() + timedelta(seconds=20)).timestamp()
 
     return render_template("verify_code.html", error="Ny kode sendt")
