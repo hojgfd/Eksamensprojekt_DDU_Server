@@ -47,6 +47,9 @@ def login():
 
         user = get_user(username)
 
+        if not user:
+            return render_template("login.html", error="Username does not exist")
+
         if user and check_password_hash(user["password"], password):
             token = create_token(user["id"]) #burde kigge på
             session["user"] = {
