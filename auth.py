@@ -31,7 +31,7 @@ def register():
 
         user_id = create_user(username, email, password)
 
-        return render_template("login.html", error="Tjek din email for at aktivere din konto")
+        return render_template("login.html")
 
     return render_template("register.html")
 
@@ -207,7 +207,7 @@ def resend_code():
 
     send_email(email, code)
 
-    # reset cooldown ()
+    # reset cooldown
     session["resend_available_at"] = (datetime.now() + timedelta(seconds=20)).timestamp()
 
     return render_template("verify_code.html", error="Ny kode sendt")

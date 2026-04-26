@@ -311,47 +311,11 @@ function closeProfile() {
         });
 
 
-let deleteStep = 0;
-let deleteTimer = null;
-let timeLeft = 20;
+    const deleteAccountBtn = document.getElementById("deleteAccountBtn");
 
-const deleteAccountBtn = document.getElementById("deleteAccountBtn");
-
-deleteAccountBtn.addEventListener("click", function() {
-
-    // STEP 1 → start countdown
-    if (deleteStep === 0) {
-        deleteStep = 1;
-        timeLeft = 20;
-
-        deleteAccountBtn.disabled = true;
-
-        deleteTimer = setInterval(() => {
-            deleteAccountBtn.innerText = `Vent ${timeLeft} sek...`;
-            timeLeft--;
-
-            if (timeLeft < 0) {
-                clearInterval(deleteTimer);
-                deleteAccountBtn.disabled = false;
-                deleteAccountBtn.innerText = "Klik igen for at slette";
-                deleteAccountBtn.style.backgroundColor = "red";
-                deleteStep = 2;
-            }
-        }, 1000);
-
-        return;
-    }
-
-    // STEP 2 → vis popup
-    if (deleteStep === 2) {
+    deleteAccountBtn.addEventListener("click", function() {
         document.getElementById("confirmDeleteModal").style.display = "block";
-    }
-});
-
-
-function closeConfirm() {
-    document.getElementById("confirmDeleteModal").style.display = "none";
-}
+    });
     </script>
 </body>
 </html>
